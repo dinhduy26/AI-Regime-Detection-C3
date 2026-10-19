@@ -54,7 +54,7 @@ def run(cfg: dict) -> dict:
                  asset, info["n_eligible"], info["train"]["n"], info["validation"]["n"],
                  info["test"]["n"], info["n_warmup_dropped"])
 
-        ext, cov = build_extended(feat, raw)
+        ext, cov = build_extended(feat, raw, cfg)
         if ext is not None:
             ext.to_parquet(proc / f"features_ext_{asset.lower()}.parquet", index=False)
             coverage_all += cov

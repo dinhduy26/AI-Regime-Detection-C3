@@ -6,9 +6,9 @@
    Làm vậy để có đúng tên file Excel yêu cầu mà không có hai nơi khai báo tham số.
 
 2) outputs/metadata/limitation_log.csv (Excel C1-08 / C1-09)
-   Ghi trạng thái biến MỞ RỘNG (VIX, S&P 500, DXY, funding, open interest):
-   - nếu đã thu thập: giữ dòng do collector ghi (độ phủ, giới hạn lịch sử thật)
-   - nếu chưa: ghi "chưa thu thập — RQ3 là mở rộng", tuyệt đối không tạo số liệu.
+   Trạng thái MỌI biến mở rộng có trong 3 tài liệu (Excel, tài liệu coder, blueprint): vĩ mô,
+   trái phiếu Mỹ, stablecoin, DeFi TVL, market cap, crypto index, funding, OI, SOL, BNB.
+   Tính lại từ file thật mỗi lần chạy; chưa có thì ghi "chưa thu thập", không tạo số liệu.
 """
 from __future__ import annotations
 
@@ -19,13 +19,27 @@ import yaml
 
 from src.utils.config import ROOT, path_of
 
+# biến mở rộng: (mã nhiệm vụ, file raw, tên series trong file hoặc None, căn cứ tài liệu)
 EXT_VARS = {
-    "vix": ("C1-08", "macro_daily.csv"), "spx": ("C1-08", "macro_daily.csv"),
-    "dxy": ("C1-08", "macro_daily.csv"),
-    "funding_rate": ("C1-09", "derivatives_daily.csv"),
-    "open_interest": ("C1-09", "btc_open_interest_recent.csv"),
+    "vix": ("C1-08", "macro_daily.csv", "VIX", "Excel C1-08; blueprint §2.4, §3.3"),
+    "spx": ("C1-08", "macro_daily.csv", "SPX", "Excel C1-08; blueprint §3.3"),
+    "dxy": ("C1-08", "macro_daily.csv", "DXY", "Excel C1-08; blueprint §2.4, §3.3"),
+    "us10y": ("C1-08", "macro_daily.csv", "US10Y", "Blueprint §3.3 (US Treasury yields)"),
+    "us2y": ("C1-08", "macro_daily.csv", "US2Y", "Blueprint §3.3 (US Treasury yields)"),
+    "us3m": ("C1-08", "macro_daily.csv", "US3M", "Blueprint §3.3 (US Treasury yields)"),
+    "stablecoin_supply": ("C1-08", "crypto_market_daily.csv", "STABLECOIN_SUPPLY",
+                          "Blueprint §2.4, §3.2, §3.5; tài liệu coder §1.7"),
+    "defi_tvl": ("C1-08", "crypto_market_daily.csv", "DEFI_TVL", "Blueprint §3.2 (DefiLlama TVL)"),
+    "market_cap_btc": ("C1-08", "crypto_market_daily.csv", "MCAP_BTC", "Blueprint §3.2 (CoinGecko)"),
+    "market_cap_eth": ("C1-08", "crypto_market_daily.csv", "MCAP_ETH", "Blueprint §3.2 (CoinGecko)"),
+    "crypto_index_cmc200": ("C1-08", "crypto_market_daily.csv", "CMC200", "Blueprint §3.1 (crypto market index)"),
+    "funding_rate": ("C1-09", "derivatives_daily.csv", None, "Excel C1-09; blueprint §2.4"),
+    "open_interest": ("C1-09", "open_interest_daily.csv", None, "Excel C1-09; blueprint §2.4, §3.2"),
+    "sol_ohlcv": ("C1-03/04 mở rộng", "sol_ohlcv.csv", None, "Blueprint §3.1 (tài sản mở rộng)"),
+    "bnb_ohlcv": ("C1-03/04 mở rộng", "bnb_ohlcv.csv", None, "Blueprint §3.1 (tài sản mở rộng)"),
 }
-LIMIT_COLS = ["task", "asset", "variable", "status", "reason", "updated_at_utc"]
+HOW_TO = "python -m src.data.collect --skip-core --all-extensions"
+LIMIT_COLS = ["task", "asset", "variable", "status", "reason", "basis", "updated_at_utc"]
 
 
 def write_collection_config(cfg: dict) -> None:
@@ -42,41 +56,59 @@ def write_collection_config(cfg: dict) -> None:
         yaml.safe_dump(snap, f, allow_unicode=True, sort_keys=False)
 
 
+def _coverage(df: pd.DataFrame, date_col: str) -> str:
+    return f"{df[date_col].min()} -> {df[date_col].max()}, {len(df)} dòng"
+
+
 def write_limitation_log(cfg: dict) -> pd.DataFrame:
+    """Trạng thái từng biến mở rộng, tính lại TỪ FILE THẬT mỗi lần chạy (không giữ trạng thái cũ).
+    Nếu file chưa có: dùng lý do lỗi collector đã ghi (nếu có), nếu không thì "chưa thu thập"."""
     meta, raw = path_of(cfg, "metadata"), path_of(cfg, "raw")
     path = meta / "limitation_log.csv"
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     old = pd.read_csv(path) if path.exists() else pd.DataFrame(columns=LIMIT_COLS)
-    if "task" not in old.columns:  # dòng do derivatives_collector ghi (định dạng cũ)
-        old.insert(0, "task", "C1-09")
+    src_log = meta / "source_log.csv"
+    srclog = pd.read_csv(src_log, dtype=str) if src_log.exists() else pd.DataFrame(columns=["asset", "notes"])
+    reliable = cfg.get("crypto_market", {}).get("reliable_from") or {}
+    cache: dict[str, pd.DataFrame | None] = {}
     rows = []
-    macro = pd.read_csv(raw / "macro_daily.csv") if (raw / "macro_daily.csv").exists() else None
-    for var, (task, fname) in EXT_VARS.items():
-        # giữ dòng giới hạn THẬT do collector ghi; bỏ dòng "chưa thu thập" cũ để đánh giá lại
-        kept = old[(old["variable"] == var) & (old["status"] != "chưa thu thập")]
-        if len(kept):
-            rows += kept.to_dict(orient="records")
-            continue
-        if task == "C1-08" and macro is not None and (macro["series"].str.lower() == var).any():
-            s = macro[macro["series"].str.lower() == var]
-            rows.append({"task": task, "asset": "ALL", "variable": var, "status": "đã thu thập",
-                         "reason": f"{s['date_local'].min()} -> {s['date_local'].max()}, "
-                                   f"{len(s)} phiên; nguồn {s['source'].iloc[0]}; "
-                                   "ghép as-of theo available_at", "updated_at_utc": now})
-        elif var == "funding_rate" and (raw / fname).exists():
-            d = pd.read_csv(raw / fname)
-            rows.append({"task": task, "asset": "BTC/ETH", "variable": var, "status": "đã thu thập",
-                         "reason": f"{d['date_utc'].min()} -> {d['date_utc'].max()} (lịch sử perpetual)",
+    for var, (task, fname, series, basis) in EXT_VARS.items():
+        if fname not in cache:
+            cache[fname] = pd.read_csv(raw / fname) if (raw / fname).exists() else None
+        df = cache[fname]
+        if df is not None and series is not None:
+            df = df[df["series"] == series]
+        if df is not None and len(df):
+            date_col = "date_local" if "date_local" in df.columns else "date_utc"
+            src = df["source"].iloc[0] if "source" in df.columns else fname
+            note = ""
+            if var.startswith("market_cap"):
+                note = " — CoinGecko miễn phí giới hạn lịch sử; chỉ dùng mô tả/robustness"
+            if var == "open_interest":
+                note = " — lịch sử từ data.binance.vision (ảnh chụp hợp lệ cuối ngày UTC; bỏ ảnh chụp OI <= 0)"
+            if reliable.get(series):
+                note += (f" — trước {reliable[series]} nguồn theo dõi chưa đầy đủ nên để trống trong "
+                         "features_ext (dữ liệu thô giữ nguyên)")
+            rows.append({"task": task, "asset": ",".join(sorted(df["asset"].unique())) if "asset" in df.columns
+                         else "ALL", "variable": var, "status": "đã thu thập",
+                         "reason": f"{_coverage(df, date_col)}; nguồn {src}{note}", "basis": basis,
                          "updated_at_utc": now})
+            continue
+        fail = old[(old.get("variable") == var) & (old.get("status") == "không dùng")] if len(old) else old
+        tried = srclog[(srclog["asset"].astype(str) == (series or "")) &
+                       srclog["notes"].astype(str).str.startswith("KHÔNG THU THẬP ĐƯỢC")] if series else srclog.iloc[0:0]
+        if len(tried):
+            rows.append({"task": task, "asset": "ALL", "variable": var, "status": "không dùng",
+                         "reason": tried["notes"].iloc[-1], "basis": basis, "updated_at_utc": now})
+        elif len(fail):
+            rows += [{**r, "basis": basis, "updated_at_utc": now} for r in fail.to_dict(orient="records")]
         else:
             rows.append({"task": task, "asset": "ALL", "variable": var, "status": "chưa thu thập",
-                         "reason": "RQ3 là mở rộng tùy chọn; chưa được nhóm phê duyệt nên chưa tải. "
-                                   "Không tạo số liệu thay thế. Chạy: python -m src.data.collect "
-                                   "--skip-core --macro --derivatives",
-                         "updated_at_utc": now})
+                         "reason": f"Mở rộng tùy chọn, chưa tải. Không tạo số liệu thay thế. Chạy: {HOW_TO}",
+                         "basis": basis, "updated_at_utc": now})
     out = pd.DataFrame(rows)
     for c in LIMIT_COLS:
         if c not in out.columns:
-            out[c] = now if c == "updated_at_utc" else ""
+            out[c] = ""
     out[LIMIT_COLS].to_csv(path, index=False)
     return out

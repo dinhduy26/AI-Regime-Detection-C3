@@ -1,0 +1,158 @@
+{
+  "created_at_utc": "2026-10-19T11:34:53+00:00",
+  "config_version": "1.1.0",
+  "config_hash": "9c0fdd7c048a0ea6",
+  "split_config": {
+    "mode": "fixed_dates",
+    "train": 0.6,
+    "validation": 0.2,
+    "anchored_on": "2026-10-18",
+    "train_end": "2023-05-05",
+    "validation_end": "2025-01-24"
+  },
+  "core_features": [
+    "log_return",
+    "rv21",
+    "log_dollar_volume"
+  ],
+  "assets": {
+    "SOL": {
+      "n_rows_clean": 2260,
+      "n_rows_dropped_other_segments": 0,
+      "n_warmup_dropped": 21,
+      "n_eligible": 2239,
+      "segments": [
+        {
+          "segment_id": 0,
+          "start": "2020-08-11",
+          "end": "2026-10-18",
+          "n_days": 2260,
+          "n_eligible": 2239,
+          "selected": true
+        }
+      ],
+      "selected_segments": [
+        0
+      ],
+      "split_mode": "fixed_dates",
+      "train": {
+        "start": "2020-09-01",
+        "end": "2023-05-05",
+        "n": 977,
+        "share": 0.4364
+      },
+      "validation": {
+        "start": "2023-05-06",
+        "end": "2025-01-24",
+        "n": 630,
+        "share": 0.2814
+      },
+      "test": {
+        "start": "2025-01-25",
+        "end": "2026-10-18",
+        "n": 632,
+        "share": 0.2823
+      },
+      "split_rule": "mốc cố định: train <= 2023-05-05 < validation <= 2025-01-24 < test (đến ngày mới nhất); mốc được chốt bằng 60/20/20 trên dữ liệu đến 2026-10-18; không shuffle",
+      "data_through_utc": "2026-10-18",
+      "latest_clean_date_utc": "2026-10-18",
+      "latest_date_in_sample": true,
+      "scaler": {
+        "features": [
+          "log_return",
+          "rv21",
+          "log_dollar_volume"
+        ],
+        "mean": {
+          "log_return": 0.001607842461190517,
+          "rv21": 0.06901716613827459,
+          "log_dollar_volume": 18.35376290074779
+        },
+        "scale": {
+          "log_return": 0.07525048604228489,
+          "rv21": 0.03004335699605218,
+          "log_dollar_volume": 1.557968843932696
+        },
+        "std_ddof": 0,
+        "zero_std_features": [],
+        "fit_on": "train",
+        "n_fit": 977
+      }
+    },
+    "BNB": {
+      "n_rows_clean": 3268,
+      "n_rows_dropped_other_segments": 94,
+      "n_warmup_dropped": 21,
+      "n_eligible": 3153,
+      "segments": [
+        {
+          "segment_id": 0,
+          "start": "2017-11-06",
+          "end": "2018-02-07",
+          "n_days": 94,
+          "n_eligible": 73,
+          "selected": false
+        },
+        {
+          "segment_id": 1,
+          "start": "2018-02-09",
+          "end": "2026-10-18",
+          "n_days": 3174,
+          "n_eligible": 3153,
+          "selected": true
+        }
+      ],
+      "selected_segments": [
+        1
+      ],
+      "split_mode": "fixed_dates",
+      "train": {
+        "start": "2018-03-02",
+        "end": "2023-05-05",
+        "n": 1891,
+        "share": 0.5997
+      },
+      "validation": {
+        "start": "2023-05-06",
+        "end": "2025-01-24",
+        "n": 630,
+        "share": 0.1998
+      },
+      "test": {
+        "start": "2025-01-25",
+        "end": "2026-10-18",
+        "n": 632,
+        "share": 0.2004
+      },
+      "split_rule": "mốc cố định: train <= 2023-05-05 < validation <= 2025-01-24 < test (đến ngày mới nhất); mốc được chốt bằng 60/20/20 trên dữ liệu đến 2026-10-18; không shuffle",
+      "data_through_utc": "2026-10-18",
+      "latest_clean_date_utc": "2026-10-18",
+      "latest_date_in_sample": true,
+      "scaler": {
+        "features": [
+          "log_return",
+          "rv21",
+          "log_dollar_volume"
+        ],
+        "mean": {
+          "log_return": 0.0018187555050036275,
+          "rv21": 0.046459837745215275,
+          "log_dollar_volume": 18.2919552744589
+        },
+        "scale": {
+          "log_return": 0.05278517301627855,
+          "rv21": 0.024997952287545606,
+          "log_dollar_volume": 1.4137501209910828
+        },
+        "std_ddof": 0,
+        "zero_std_features": [],
+        "fit_on": "train",
+        "n_fit": 1891
+      }
+    }
+  },
+  "data_through_utc": {
+    "SOL": "2026-10-18",
+    "BNB": "2026-10-18"
+  }
+}

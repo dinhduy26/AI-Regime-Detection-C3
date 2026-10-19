@@ -234,7 +234,8 @@ def finalize_raw(df: pd.DataFrame, asset: str, symbol: str, source: str, url: st
 
 def collect_asset(asset: str, cfg: dict, raw_dir: Path, method: str = "api") -> dict:
     """Tải 1 tài sản, lưu data/raw/{asset}_ohlcv.csv, trả về 1 dòng cho source_log."""
-    symbol = cfg["assets"][asset]["symbol"]
+    assets = {**cfg["assets"], **cfg.get("extension_assets", {})}
+    symbol = assets[asset]["symbol"]
     notes = []
     if method == "api":
         try:

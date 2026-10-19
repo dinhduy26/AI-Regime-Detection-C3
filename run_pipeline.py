@@ -5,7 +5,7 @@
     python run_pipeline.py --steps clean features      # chỉ chạy một số bước
     python run_pipeline.py --download --macro --derivatives   # kèm dữ liệu mở rộng RQ3
 
-Thứ tự bước: collect -> clean -> features -> reports -> models (C2) -> backtest (C3)
+Thứ tự bước: collect -> clean -> features -> reports -> extensions (SOL/BNB) -> models (C2) -> backtest (C3)
 Bước models/backtest được gọi tự động KHI module của C2/C3 đã có hàm run(cfg):
     src/models/run.py        (C2)
     src/evaluation/backtest_run.py  (C3)
@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from src.utils.config import ROOT, file_hash, get_logger, load_config, path_of, read_json, write_json
 
 log = get_logger("pipeline")
-ALL_STEPS = ["collect", "clean", "features", "reports", "models", "backtest"]
+ALL_STEPS = ["collect", "clean", "features", "reports", "extensions", "models", "backtest"]
 OPTIONAL_HOOKS = {"models": "src.models.run", "backtest": "src.evaluation.backtest_run"}
 
 
@@ -39,6 +39,7 @@ def main(argv=None) -> int:
     ap.add_argument("--method", choices=["api", "vision"], default="api")
     ap.add_argument("--macro", action="store_true")
     ap.add_argument("--derivatives", action="store_true")
+    ap.add_argument("--all-extensions", action="store_true", help="tải mọi dữ liệu mở rộng khi --download")
     ap.add_argument("--steps", nargs="*", default=None, choices=ALL_STEPS)
     args = ap.parse_args(argv)
 
@@ -56,7 +57,8 @@ def main(argv=None) -> int:
                     continue
                 from src.data import collect
                 cli = ["--method", args.method] + (["--macro"] if args.macro else []) \
-                    + (["--derivatives"] if args.derivatives else [])
+                    + (["--derivatives"] if args.derivatives else []) \
+                    + (["--all-extensions"] if args.all_extensions else [])
                 if args.config:
                     cli += ["--config", args.config]
                 collect.main(cli)
@@ -69,6 +71,11 @@ def main(argv=None) -> int:
             elif step == "reports":
                 from src.evaluation import descriptives
                 descriptives.run(cfg)
+            elif step == "extensions":   # tài sản mở rộng SOL/BNB (nếu đã tải)
+                from src.features import extension_assets
+                if not extension_assets.run(cfg):
+                    status[step] = "bỏ qua — chưa tải SOL/BNB (--extra-assets)"
+                    continue
             else:  # bước của C2/C3: chỉ chạy nếu module đã tồn tại
                 try:
                     mod = importlib.import_module(OPTIONAL_HOOKS[step])
@@ -84,8 +91,8 @@ def main(argv=None) -> int:
             break
 
     outputs = {}
-    for folder in ("data/processed", "outputs/tables", "outputs/figures", "outputs/metadata",
-                   "outputs/models", "data/raw"):
+    for folder in ("data/processed", "data/processed/extension", "outputs/tables", "outputs/figures",
+                   "outputs/metadata", "outputs/models", "outputs/models/extension", "data/raw"):
         for p in sorted((ROOT / folder).glob("*")):
             if p.is_file() and p.name not in (".gitkeep", "run_manifest.json"):
                 outputs[p.relative_to(ROOT).as_posix()] = file_hash(p)

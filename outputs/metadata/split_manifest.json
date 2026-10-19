@@ -1,7 +1,7 @@
 {
-  "created_at_utc": "2026-10-19T05:22:29+00:00",
+  "created_at_utc": "2026-10-19T11:34:50+00:00",
   "config_version": "1.1.0",
-  "config_hash": "e6fe11de0397763a",
+  "config_hash": "9c0fdd7c048a0ea6",
   "gap_handling_method": "longest_segment",
   "core_features": [
     "log_return",

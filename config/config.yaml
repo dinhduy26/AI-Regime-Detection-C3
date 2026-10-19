@@ -98,12 +98,46 @@ macro:
     VIX: "^VIX"
     SPX: "^GSPC"
     DXY: "DX-Y.NYB"
+  # Lợi suất trái phiếu Mỹ (blueprint §3.3) — FRED, % /năm, ngày làm việc Mỹ
+  fred_series:
+    US10Y: DGS10
+    US2Y: DGS2
+    US3M: DGS3MO
   # Giá đóng cửa Mỹ ngày d coi như CHỈ CÓ SẴN sau 00:00 UTC ngày d + lag.
   # lag = 1 nghĩa là: tín hiệu của nến crypto ngày d+1 mới được dùng giá ngày d.
   availability_lag_days: 1
+
+# Biến thị trường crypto (blueprint §3.1–3.2, §3.5; tài liệu coder §1.7) — MỞ RỘNG
+crypto_market:
+  enabled: false
+  start_date: "2017-01-01"
+  stablecoins_url: https://stablecoins.llama.fi/stablecoincharts/all      # DefiLlama
+  defi_tvl_url: https://api.llama.fi/v2/historicalChainTvl                 # DefiLlama
+  coingecko_url: https://api.coingecko.com/api/v3                           # market cap
+  coingecko_ids: {BTC: bitcoin, ETH: ethereum}
+  crypto_index_tickers: {CMC200: "^CMC200"}                                 # Yahoo Finance
+  growth_window_days: 7
+  # Trước các mốc này nguồn theo dõi CHƯA ĐẦY ĐỦ (vd. DefiLlama cuối 2018 chỉ ghi ~0,4 tỷ USD
+  # stablecoin, thấp hơn nhiều thực tế). Dữ liệu thô giữ nguyên; trong features_ext các giá trị
+  # trước mốc được để trống. Đặt null để bỏ quy tắc. Nhóm có thể điều chỉnh khi làm RQ3.
+  reliable_from:
+    STABLECOIN_SUPPLY: "2020-01-01"
+  # Điểm dữ liệu ngày d coi như có sẵn từ 00:00 UTC ngày d + 1 + lag (thận trọng, như macro)
+  availability_lag_days: 1
+
+# Tài sản mở rộng (blueprint §3.1) — xử lý GIỐNG HỆT BTC/ETH nhưng ghi ra thư mục riêng
+extension_assets:
+  SOL: {symbol: SOLUSDT, quote: USDT}
+  BNB: {symbol: BNBUSDT, quote: USDT}
 
 derivatives:
   enabled: false
   futures_base_url: https://fapi.binance.com
   symbols: {BTC: BTCUSDT, ETH: ETHUSDT}
   funding_start_date: "2019-09-01"
+  # Open interest lịch sử: file "metrics" 5 phút/ngày trên data.binance.vision (USDⓈ-M)
+  # (API /futures/data/openInterestHist chỉ trả 30 ngày gần nhất)
+  oi_metrics_url: https://data.binance.vision/data/futures/um/daily/metrics
+  oi_start_date: "2020-01-01"
+  oi_download_workers: 8
+  growth_window_days: 7

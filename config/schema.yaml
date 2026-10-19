@@ -84,6 +84,35 @@ files:
     consumers: [Research, C2]
     columns: [task, asset, variable, status, reason, updated_at_utc]
 
+  macro_daily:
+    path: data/raw/macro_daily.csv
+    owner: C1
+    columns: [series, date_local, value, available_at_utc, source, fetched_at_utc]
+    series: [VIX, SPX, DXY, US10Y, US2Y, US3M]
+
+  crypto_market_daily:
+    path: data/raw/crypto_market_daily.csv
+    owner: C1
+    columns: [series, date_local, value, available_at_utc, source, fetched_at_utc]
+    series: [STABLECOIN_SUPPLY, DEFI_TVL, MCAP_BTC, MCAP_ETH, CMC200]
+
+  open_interest_daily:
+    path: data/raw/open_interest_daily.csv
+    owner: C1
+    columns: [asset, date_utc, open_interest, open_interest_value_usdt, n_snapshots, last_snapshot_utc]
+
+  features_ext:
+    path: "data/processed/features_ext_{asset_lower}.parquet"
+    owner: C1
+    consumers: [C2]
+    note: biến mở rộng RQ3 ghép as-of; KHÔNG thuộc feature lõi HMM
+
+  extension_assets:
+    path: data/processed/extension/
+    owner: C1
+    files: [prices_daily_ext.parquet, "features_{asset_lower}.parquet", "scaled_features_{asset_lower}.parquet"]
+    assets: [SOL, BNB]
+
   data_dictionary:
     path: outputs/metadata/data_dictionary.csv
     owner: C1

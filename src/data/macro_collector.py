@@ -1,6 +1,7 @@
-"""C1-08 [TÙY CHỌN / MỞ RỘNG RQ3] — VIX, S&P 500, DXY.
+"""C1-08 [TÙY CHỌN / MỞ RỘNG RQ3] — VIX, S&P 500, DXY và lợi suất trái phiếu Mỹ.
 
-Nguồn chính: Yahoo Finance qua thư viện yfinance.
+Nguồn chính: Yahoo Finance qua thư viện yfinance (VIX, S&P 500, DXY).
+Lợi suất trái phiếu Mỹ (blueprint §3.3): FRED DGS10 / DGS2 / DGS3MO, đơn vị %/năm.
 Dự phòng   : FRED (VIXCLS, SP500) — tải CSV công khai. DXY không có trên FRED
              (DTWEXBGS là chỉ số khác) -> nếu Yahoo lỗi thì GHI GIỚI HẠN, không thay thế ngầm.
 
@@ -97,6 +98,33 @@ def collect_macro(cfg: dict, raw_dir: Path) -> list[dict]:
                      "notes": f"available_at = ngày + {1 + lag} ngày 00:00 UTC. {note}".strip()})
         log.info("%s: %d phiên (%s -> %s)", name, len(df), df["date_local"].min(),
                  df["date_local"].max())
+    # ---- Lợi suất trái phiếu Mỹ từ FRED (cùng quy tắc thời điểm sẵn có) ----
+    for name, series_id in m.get("fred_series", {}).items():
+        try:
+            df = _from_fred(series_id, m["start_date"])
+        except Exception as e:  # noqa: BLE001
+            logs.append({"asset": name, "symbol": series_id, "source": "FRED", "endpoint": "",
+                         "interval": "1d", "timezone": "US/Eastern",
+                         "requested_start": m["start_date"], "actual_start": "", "actual_end": "",
+                         "n_rows": 0, "fetched_at_utc": fetched,
+                         "notes": f"KHÔNG THU THẬP ĐƯỢC: {e}"})
+            continue
+        df["series"] = name
+        df["source"] = f"FRED ({series_id})"
+        df["available_at_utc"] = (pd.to_datetime(df["date_local"]) + pd.Timedelta(days=1 + lag)
+                                  ).dt.strftime("%Y-%m-%dT00:00:00+00:00")
+        df["fetched_at_utc"] = fetched
+        frames.append(df[["series", "date_local", "value", "available_at_utc", "source",
+                          "fetched_at_utc"]])
+        logs.append({"asset": name, "symbol": series_id, "source": f"FRED ({series_id})",
+                     "endpoint": f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}",
+                     "interval": "1d (ngày làm việc Mỹ)", "timezone": "US/Eastern",
+                     "requested_start": m["start_date"], "actual_start": df["date_local"].min(),
+                     "actual_end": df["date_local"].max(), "n_rows": len(df), "fetched_at_utc": fetched,
+                     "notes": f"đơn vị %/năm; available_at = ngày + {1 + lag} ngày 00:00 UTC"})
+        log.info("%s (%s): %d ngày (%s -> %s)", name, series_id, len(df), df["date_local"].min(),
+                 df["date_local"].max())
+
     if frames:
         out = pd.concat(frames, ignore_index=True)
         out.to_csv(raw_dir / "macro_daily.csv", index=False)

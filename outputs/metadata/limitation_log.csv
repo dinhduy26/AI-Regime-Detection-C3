@@ -1,7 +1,16 @@
-task,asset,variable,status,reason,updated_at_utc
-C1-08,ALL,vix,đã thu thập,"2017-01-03 -> 2026-10-16, 2463 phiên; nguồn Yahoo Finance (^VIX); ghép as-of theo available_at",2026-10-19T05:22:27+00:00
-C1-08,ALL,spx,đã thu thập,"2017-01-03 -> 2026-10-16, 2461 phiên; nguồn Yahoo Finance (^GSPC); ghép as-of theo available_at",2026-10-19T05:22:27+00:00
-C1-08,ALL,dxy,đã thu thập,"2017-01-03 -> 2026-10-16, 2463 phiên; nguồn Yahoo Finance (DX-Y.NYB); ghép as-of theo available_at",2026-10-19T05:22:27+00:00
-C1-09,BTC/ETH,funding_rate,đã thu thập,2019-09-10 -> 2026-10-18 (lịch sử perpetual),2026-10-19T05:22:27+00:00
-C1-09,BTC,open_interest,không dùng cho mô hình,API chỉ trả 30 ngày gần nhất (2026-09-20 -> 2026-10-19); không đủ lịch sử,
-C1-09,ETH,open_interest,không dùng cho mô hình,API chỉ trả 30 ngày gần nhất (2026-09-20 -> 2026-10-19); không đủ lịch sử,
+task,asset,variable,status,reason,basis,updated_at_utc
+C1-08,ALL,vix,đã thu thập,"2017-01-03 -> 2026-10-16, 2463 dòng; nguồn Yahoo Finance (^VIX)","Excel C1-08; blueprint §2.4, §3.3",2026-10-19T11:34:48+00:00
+C1-08,ALL,spx,đã thu thập,"2017-01-03 -> 2026-10-16, 2461 dòng; nguồn Yahoo Finance (^GSPC)",Excel C1-08; blueprint §3.3,2026-10-19T11:34:48+00:00
+C1-08,ALL,dxy,đã thu thập,"2017-01-03 -> 2026-10-16, 2463 dòng; nguồn Yahoo Finance (DX-Y.NYB)","Excel C1-08; blueprint §2.4, §3.3",2026-10-19T11:34:48+00:00
+C1-08,ALL,us10y,đã thu thập,"2017-01-03 -> 2026-10-15, 2447 dòng; nguồn FRED (DGS10)",Blueprint §3.3 (US Treasury yields),2026-10-19T11:34:48+00:00
+C1-08,ALL,us2y,đã thu thập,"2017-01-03 -> 2026-10-15, 2447 dòng; nguồn FRED (DGS2)",Blueprint §3.3 (US Treasury yields),2026-10-19T11:34:48+00:00
+C1-08,ALL,us3m,đã thu thập,"2017-01-03 -> 2026-10-15, 2447 dòng; nguồn FRED (DGS3MO)",Blueprint §3.3 (US Treasury yields),2026-10-19T11:34:48+00:00
+C1-08,ALL,stablecoin_supply,đã thu thập,"2017-11-29 -> 2026-10-18, 3246 dòng; nguồn DefiLlama stablecoins — trước 2020-01-01 nguồn theo dõi chưa đầy đủ nên để trống trong features_ext (dữ liệu thô giữ nguyên)","Blueprint §2.4, §3.2, §3.5; tài liệu coder §1.7",2026-10-19T11:34:48+00:00
+C1-08,ALL,defi_tvl,đã thu thập,"2018-02-12 -> 2026-10-18, 3171 dòng; nguồn DefiLlama DeFi TVL",Blueprint §3.2 (DefiLlama TVL),2026-10-19T11:34:48+00:00
+C1-08,ALL,market_cap_btc,đã thu thập,"2025-10-20 -> 2026-10-18, 364 dòng; nguồn CoinGecko market cap (bitcoin) — CoinGecko miễn phí giới hạn lịch sử; chỉ dùng mô tả/robustness",Blueprint §3.2 (CoinGecko),2026-10-19T11:34:48+00:00
+C1-08,ALL,market_cap_eth,đã thu thập,"2025-10-20 -> 2026-10-18, 364 dòng; nguồn CoinGecko market cap (ethereum) — CoinGecko miễn phí giới hạn lịch sử; chỉ dùng mô tả/robustness",Blueprint §3.2 (CoinGecko),2026-10-19T11:34:48+00:00
+C1-08,ALL,crypto_index_cmc200,không dùng,KHÔNG THU THẬP ĐƯỢC: Yahoo không trả dữ liệu cho ^CMC200. Không thay bằng nguồn khác.,Blueprint §3.1 (crypto market index),2026-10-19T11:34:48+00:00
+C1-09,"BTC,ETH",funding_rate,đã thu thập,"2019-09-10 -> 2026-10-18, 5114 dòng; nguồn derivatives_daily.csv",Excel C1-09; blueprint §2.4,2026-10-19T11:34:48+00:00
+C1-09,"BTC,ETH",open_interest,đã thu thập,"2020-09-01 -> 2026-10-18, 4022 dòng; nguồn open_interest_daily.csv — lịch sử từ data.binance.vision (ảnh chụp hợp lệ cuối ngày UTC; bỏ ảnh chụp OI <= 0)","Excel C1-09; blueprint §2.4, §3.2",2026-10-19T11:34:48+00:00
+C1-03/04 mở rộng,SOL,sol_ohlcv,đã thu thập,"2020-08-11 -> 2026-10-18, 2260 dòng; nguồn Binance Spot REST /api/v3/klines",Blueprint §3.1 (tài sản mở rộng),2026-10-19T11:34:48+00:00
+C1-03/04 mở rộng,BNB,bnb_ohlcv,đã thu thập,"2017-11-06 -> 2026-10-18, 3269 dòng; nguồn Binance Spot REST /api/v3/klines",Blueprint §3.1 (tài sản mở rộng),2026-10-19T11:34:48+00:00

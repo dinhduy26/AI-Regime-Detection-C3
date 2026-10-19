@@ -1,8 +1,8 @@
 _ghi_chu: TỰ SINH từ config/config.yaml — KHÔNG sửa tay file này
-generated_at_utc: '2026-10-19T05:22:28+00:00'
+generated_at_utc: '2026-10-19T11:34:48+00:00'
 source_config: config/config.yaml
 config_version: 1.1.0
-config_hash: e6fe11de0397763a
+config_hash: 9c0fdd7c048a0ea6
 source: Binance Spot (REST /api/v3/klines; dự phòng data.binance.vision)
 market: spot
 timezone: UTC

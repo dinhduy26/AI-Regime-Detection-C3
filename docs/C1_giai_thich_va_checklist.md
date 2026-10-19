@@ -14,8 +14,9 @@ Tài liệu này giúp người phụ trách C1 trả lời câu hỏi khi bảo
 | C1-05 | Làm sạch, QA, đối soát | `src/data/clean.py`, `src/data/crosscheck.py` | `prices_daily.parquet`, `gap_report.csv`, `data_quality.csv`, `price_crosscheck.csv` |
 | C1-06 | Log return, RV21 | `src/features/build.py` | `features_{asset}.parquet` |
 | C1-07 | Quote volume, Amihud, tương quan | `src/features/build.py` | `log_dollar_volume`, `amihud_illiq`, `btc_eth_corr21` |
-| C1-08 | VIX/DXY/S&P (tùy chọn) | `src/data/macro_collector.py`, `src/features/extended.py` | `macro_daily.csv`, `features_ext_{asset}.parquet` |
-| C1-09 | Funding/OI (tùy chọn) | `src/data/derivatives_collector.py`, `src/data/collection_meta.py` | `derivatives_daily.csv` hoặc `limitation_log.csv` (luôn có) |
+| C1-08 | VIX/DXY/S&P, trái phiếu Mỹ; stablecoin, DeFi TVL, market cap, CMC200 | `src/data/macro_collector.py`, `src/data/crypto_market_collector.py`, `src/features/extended.py` | `macro_daily.csv`, `crypto_market_daily.csv`, `features_ext_{asset}.parquet` |
+| C1-09 | Funding, open interest lịch sử | `src/data/derivatives_collector.py`, `src/data/collection_meta.py` | `derivatives_daily.csv`, `open_interest_daily.csv`, `limitation_log.csv` |
+| (blueprint §3.1) | SOL, BNB | `src/features/extension_assets.py` | `data/processed/extension/*` |
 | C1-10 | Ghép ma trận, chia mẫu | `src/features/build.py`, `src/features/pipeline.py` | `split_manifest.json` |
 | C1-11 | Scaler chỉ trên train | `src/features/scaling.py` | `scaler_{asset}.joblib`, `scaled_features_{asset}.parquet` |
 | C1-12 | Từ điển, B01/B02/H01 | `src/evaluation/descriptives.py` | `B01`, `B02`, `H01`, `data_dictionary.csv` |
@@ -67,8 +68,11 @@ Theo đúng công thức đặc tả §1.9: skew = m3 / m2^1.5 và kurtosis = m4
 **Vì sao dữ liệu vĩ mô có độ trễ (lag)?**
 Giá đóng cửa Mỹ của ngày d chỉ có sau khi phiên Mỹ đóng. Code dùng quy ước thận trọng: giá ngày d chỉ được dùng cho nến crypto từ ngày d+1 trở đi, ghép bằng quy tắc as-of `available_at ≤ thời điểm nến đóng`. Thứ Bảy và Chủ nhật dùng giá thứ Sáu, **không bao giờ** dùng giá thứ Hai.
 
-**Vì sao open interest không dùng được?**
-API Binance chỉ trả khoảng 30 ngày lịch sử gần nhất, không đủ để huấn luyện mô hình. Giới hạn này được ghi trong `limitation_log.csv` thay vì tự tạo số liệu.
+**Open interest lấy lịch sử ở đâu?**
+API Binance chỉ trả 30 ngày gần nhất, nên C1 lấy lịch sử từ file "metrics" (ảnh chụp 5 phút) mà Binance công bố trên data.binance.vision. Giá trị của ngày t là ảnh chụp cuối cùng trong ngày UTC t, tức đã có trước khi nến t đóng. Ngày nào Binance không có file thì để trống.
+
+**Vì sao các biến mở rộng phải trễ 1 ngày?**
+Dữ liệu vĩ mô, trái phiếu, stablecoin… được công bố sau khi ngày kết thúc. Để chắc chắn không dùng thông tin chưa công bố, giá trị của ngày d chỉ được dùng cho nến crypto từ ngày d+1. Test `test_ext_point_in_time` kiểm tra từng giá trị đã ghép.
 
 ## 3. Checklist trước khi giao cho C2/C3
 

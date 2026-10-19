@@ -1,0 +1,21 @@
+asset,check,n_flagged,detail,action
+SOL,số dòng thô,2260,,—
+SOL,dòng không hợp lệ (OHLC/volume/thời gian),0,,"loại, ghi excluded_rows.csv"
+SOL,"trùng (asset,date) giống hệt",0,,giữ 1 bản
+SOL,"trùng (asset,date) mâu thuẫn",0,,"loại cả ngày, coi như thiếu"
+SOL,ngày thiếu trong lịch UTC,0,0 khoảng đứt,không điền; xem gap_report.csv
+SOL,số đoạn liên tục,1,,gap_handling_method=longest_segment
+SOL,|log return| > 0.3,6,2020-09-05; 2020-09-09; 2020-11-06; 2021-01-08; 2021-05-19; 2022-11-09,"chỉ ghi nhận, giữ nguyên (biến động thật cần kiểm tra thủ công)"
+SOL,quote_volume = 0,0,,giữ; log_dollar_volume = ln(1+0) = 0; amihud để trống
+SOL,nguồn dữ liệu,1,Binance Spot REST /api/v3/klines,ghi provenance
+SOL,số dòng sạch,2260,2020-08-11 -> 2026-10-18,—
+BNB,số dòng thô,3269,,—
+BNB,dòng không hợp lệ (OHLC/volume/thời gian),1,2018-02-08,"loại, ghi excluded_rows.csv"
+BNB,"trùng (asset,date) giống hệt",0,,giữ 1 bản
+BNB,"trùng (asset,date) mâu thuẫn",0,,"loại cả ngày, coi như thiếu"
+BNB,ngày thiếu trong lịch UTC,1,1 khoảng đứt,không điền; xem gap_report.csv
+BNB,số đoạn liên tục,2,,gap_handling_method=longest_segment
+BNB,|log return| > 0.3,7,2017-12-26; 2018-01-05; 2018-01-06; 2018-01-16; 2020-03-12; 2021-02-19; 2021-05-19,"chỉ ghi nhận, giữ nguyên (biến động thật cần kiểm tra thủ công)"
+BNB,quote_volume = 0,0,,giữ; log_dollar_volume = ln(1+0) = 0; amihud để trống
+BNB,nguồn dữ liệu,1,Binance Spot REST /api/v3/klines,ghi provenance
+BNB,số dòng sạch,3268,2017-11-06 -> 2026-10-18,—

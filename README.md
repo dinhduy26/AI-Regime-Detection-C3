@@ -49,11 +49,26 @@ Nếu `api.binance.com` bị chặn, code tự thử lần lượt `api1/api2/ap
 python -m src.data.collect --method vision
 ```
 
-Dữ liệu mở rộng cho RQ3 là tùy chọn:
+Dữ liệu mở rộng (RQ3, robustness, tài sản mở rộng) — tải **tất cả** mà không tải lại BTC/ETH:
 
 ```bash
-python -m src.data.collect --macro --derivatives   # VIX/S&P500/DXY + funding/open interest
+python -m src.data.collect --skip-core --all-extensions
+python run_pipeline.py
 ```
+
+| Nhóm | Biến | Nguồn | Căn cứ |
+|---|---|---|---|
+| Vĩ mô (`--macro`) | VIX, S&P 500, DXY | Yahoo Finance | Excel C1-08 |
+| | Lợi suất trái phiếu Mỹ 10 năm, 2 năm, 3 tháng; term spread 10Y–2Y | FRED | Blueprint §3.3 |
+| Crypto (`--crypto-market`) | Stablecoin supply + tăng trưởng 7 ngày | DefiLlama | Blueprint §2.4, §3.5; tài liệu coder §1.7 |
+| | DeFi TVL + tăng trưởng 7 ngày | DefiLlama | Blueprint §3.2 |
+| | Market cap BTC, ETH (lịch sử giới hạn ở bản miễn phí) | CoinGecko | Blueprint §3.2 |
+| | CMC Crypto 200 Index (nếu Yahoo có) | Yahoo Finance | Blueprint §3.1 |
+| Phái sinh (`--derivatives`) | Funding rate | Binance Futures API | Excel C1-09 |
+| | Open interest **có lịch sử** + tăng trưởng 7 ngày | data.binance.vision (metrics) | Excel C1-09; blueprint §2.4 |
+| Tài sản (`--extra-assets`) | SOL, BNB (xử lý giống hệt BTC/ETH) | Binance Spot | Blueprint §3.1 |
+
+Mọi biến mở rộng được ghép **as-of** (chỉ dùng giá trị đã công bố trước khi nến ngày t đóng) vào `features_ext_{btc,eth}.parquet`, không đổi feature lõi của HMM. SOL/BNB ra thư mục `data/processed/extension/`. Trạng thái từng biến: `outputs/metadata/limitation_log.csv`. Bước tải open interest lịch sử mất vài phút vì phải tải từng file ngày.
 
 ## 3. Chạy pipeline
 

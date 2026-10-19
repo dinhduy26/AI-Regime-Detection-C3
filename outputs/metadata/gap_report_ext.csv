@@ -1,0 +1,2 @@
+asset,missing_from,missing_to,gap_length,last_before,first_after,handling
+BNB,2018-02-08,2018-02-08,1,2018-02-07,2018-02-09,không điền/không nội suy; đứt chuỗi; không tính return/RV21 qua gap; HMM chỉ dùng đoạn liên tục dài nhất

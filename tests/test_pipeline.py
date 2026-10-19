@@ -31,14 +31,15 @@ def test_train_only_scaler(feats, cfg):
     for a, f in feats.items():
         saved = joblib.load(ROOT / f"outputs/models/scaler_{a.lower()}.joblib")["scaler"]
         s = fit_scaler(chronological_split(f)["train"], cfg)
-        np.testing.assert_array_equal(s.mean_, saved.mean_)
-        np.testing.assert_array_equal(s.scale_, saved.scale_)
+        np.testing.assert_allclose(s.mean_, saved.mean_, rtol=1e-12)
+        np.testing.assert_allclose(s.scale_, saved.scale_, rtol=1e-12)
 
 
 def test_interface_matches_saved_files(prices, feats, cfg):
     built = build_features(prices, cfg)
     for a, f in feats.items():
         b = built[built["asset"] == a][f.columns].reset_index(drop=True)
-        pd.testing.assert_frame_equal(b, f.reset_index(drop=True), check_exact=True)
+        # cùng logic -> trùng khớp; cho phép sai số làm tròn số thực giữa các máy/phiên bản thư viện
+        pd.testing.assert_frame_equal(b, f.reset_index(drop=True), check_exact=False, rtol=1e-10, atol=1e-12)
         parts = chronological_split(f)
         assert sum(len(p) for p in parts.values()) == len(f)

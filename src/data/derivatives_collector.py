@@ -6,14 +6,21 @@
       funding_mean = trung bình, funding_n = số lần thanh toán thực có
   Mọi lần thanh toán trong ngày t đều xảy ra trước khi nến ngày t đóng (24:00 UTC),
   nên giá trị ngày t được coi là có sẵn tại cuối ngày t.
-- Open interest: GET /futures/data/openInterestHist CHỈ trả khoảng 30 ngày gần nhất
-  -> không đủ lịch sử cho mô hình; vẫn tải để ghi giới hạn vào limitation_log.
+- Open interest: API /futures/data/openInterestHist chỉ trả ~30 ngày, nên lấy LỊCH SỬ từ file
+  "metrics" (ảnh chụp 5 phút) trên data.binance.vision/data/futures/um/daily/metrics/.
+  Giá trị ngày t = ẢNH CHỤP HỢP LỆ CUỐI CÙNG trong ngày UTC t (đã có trước khi nến t đóng).
+  Làm sạch: bỏ dòng lặp y hệt; bỏ ảnh chụp cùng giờ nhưng khác số (không đoán bản đúng);
+  bỏ ảnh chụp OI <= 0 (lỗi dữ liệu — OI của BTC/ETH perpetual không thể bằng 0).
+  Ngày nào không có file -> để trống, ghi số ngày thiếu vào source_log.
 Không điền giả số; ngày không có dữ liệu để trống.
 """
 from __future__ import annotations
 
+import io
 import time
-from datetime import datetime, timezone
+import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -47,24 +54,90 @@ def _funding_history(symbol: str, cfg: dict) -> pd.DataFrame:
     return df
 
 
-def _open_interest(symbol: str, cfg: dict) -> pd.DataFrame:
-    base = cfg["derivatives"]["futures_base_url"]
-    url = f"{base}/futures/data/openInterestHist"
-    rows = _get_with_retry(requests.Session(), url,
-                           {"symbol": symbol, "period": "1d", "limit": 500}, cfg)
-    df = pd.DataFrame(rows)
-    if df.empty:
-        return df
-    df["date_utc"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True).dt.strftime("%Y-%m-%d")
-    df["open_interest"] = pd.to_numeric(df["sumOpenInterest"])
-    df["open_interest_value_usdt"] = pd.to_numeric(df["sumOpenInterestValue"])
-    return df[["date_utc", "open_interest", "open_interest_value_usdt"]]
+def _oi_one_day(symbol: str, day: str, cfg: dict) -> dict | None:
+    """Tải file metrics của 1 ngày; trả về ảnh chụp cuối cùng THUỘC ngày UTC đó."""
+    url = f"{cfg['derivatives']['oi_metrics_url']}/{symbol}/{symbol}-metrics-{day}.zip"
+    for i in range(3):
+        try:
+            r = requests.get(url, timeout=30)
+            break
+        except requests.RequestException:
+            time.sleep(1.5 * 2 ** i)
+    else:
+        return None
+    if r.status_code != 200:
+        return None
+    try:
+        with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+            m = pd.read_csv(z.open(z.namelist()[0]))
+        m["create_time"] = pd.to_datetime(m["create_time"], utc=True)
+        m["sum_open_interest"] = pd.to_numeric(m["sum_open_interest"])
+        m["sum_open_interest_value"] = pd.to_numeric(m["sum_open_interest_value"])
+    except (zipfile.BadZipFile, KeyError, ValueError) as e:
+        log.warning("%s %s: file metrics lỗi định dạng (%s) -> bỏ qua ngày này", symbol, day, e)
+        return None
+    m = m[m["create_time"].dt.strftime("%Y-%m-%d") == day]
+    n_raw = len(m)
+    m = m.drop_duplicates(subset=["create_time", "sum_open_interest", "sum_open_interest_value"])
+    n_conflict = int(m["create_time"].duplicated(keep=False).sum())   # cùng giờ nhưng khác số
+    m = m[~m["create_time"].duplicated(keep=False)]                     # không đoán bản đúng
+    valid = m[(m["sum_open_interest"] > 0) & (m["sum_open_interest_value"] > 0)].sort_values("create_time")
+    if valid.empty:
+        return None
+    last = valid.iloc[-1]
+    return {"date_utc": day, "open_interest": float(last["sum_open_interest"]),
+            "open_interest_value_usdt": float(last["sum_open_interest_value"]),
+            "n_snapshots": len(m), "n_duplicate_rows": n_raw - len(m) - n_conflict,
+            "n_conflicting_rows": n_conflict, "n_invalid_snapshots": len(m) - len(valid),
+            "last_snapshot_utc": last["create_time"].isoformat()}
+
+
+def _first_available_day(symbol: str, cfg: dict, end: datetime) -> datetime | None:
+    """Dò từng tháng (ngày 1, rồi ngày 15) từ oi_start_date tới khi gặp file đầu tiên."""
+    d = datetime.strptime(cfg["derivatives"]["oi_start_date"], "%Y-%m-%d")
+    while d <= end:
+        for day in (d, d.replace(day=15)):
+            if _oi_one_day(symbol, day.strftime("%Y-%m-%d"), cfg):
+                # lùi lại tối đa 31 ngày để không bỏ sót các ngày đầu
+                back = day - timedelta(days=31)
+                return max(back, datetime.strptime(cfg["derivatives"]["oi_start_date"], "%Y-%m-%d"))
+        d = (d.replace(day=28) + timedelta(days=4)).replace(day=1)
+    return None
+
+
+def _oi_history(symbol: str, cfg: dict) -> tuple[pd.DataFrame, int]:
+    yesterday = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=1)
+    start = _first_available_day(symbol, cfg, yesterday)
+    if start is None:
+        raise SourceUnavailable(f"data.binance.vision không có file metrics cho {symbol}")
+    days = [(start + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range((yesterday - start).days + 1)]
+    log.info("%s: tải open interest %d ngày (%s -> %s) từ data.binance.vision ...",
+             symbol, len(days), days[0], days[-1])
+    rows, done, step = [], 0, max(1, len(days) // 10)
+    t0 = time.time()
+    with ThreadPoolExecutor(max_workers=int(cfg["derivatives"]["oi_download_workers"])) as ex:
+        futures = [ex.submit(_oi_one_day, symbol, d, cfg) for d in days]
+        for fut in as_completed(futures):
+            r = fut.result()
+            if r:
+                rows.append(r)
+            done += 1
+            if done % step == 0 or done == len(days):
+                el = time.time() - t0
+                log.info("%s open interest: %d/%d ngày (%d%%), đã chạy %.0fs, còn khoảng %.0fs",
+                         symbol, done, len(days), 100 * done // len(days), el,
+                         el / done * (len(days) - done))
+    df = pd.DataFrame(rows).sort_values("date_utc").reset_index(drop=True)
+    first = df["date_utc"].min()
+    n_missing = len([d for d in days if d >= first]) - len(df)
+    return df, n_missing
 
 
 def collect_derivatives(cfg: dict, raw_dir: Path) -> tuple[list[dict], list[dict]]:
     fetched = datetime.now(timezone.utc)
     today = fetched.strftime("%Y-%m-%d")
-    frames, src_logs, limits = [], [], []
+    frames, oi_frames, src_logs, limits = [], [], [], []
     for asset, symbol in cfg["derivatives"]["symbols"].items():
         try:
             f = _funding_history(symbol, cfg)
@@ -89,18 +162,21 @@ def collect_derivatives(cfg: dict, raw_dir: Path) -> tuple[list[dict], list[dict
             limits.append({"task": "C1-09", "asset": asset, "variable": "funding_rate",
                            "status": "không dùng", "reason": str(e)})
         try:
-            oi = _open_interest(symbol, cfg)
-            limits.append({"task": "C1-09", "asset": asset, "variable": "open_interest",
-                           "status": "không dùng cho mô hình",
-                           "reason": f"API chỉ trả {len(oi)} ngày gần nhất "
-                                     f"({oi['date_utc'].min() if len(oi) else '-'} -> "
-                                     f"{oi['date_utc'].max() if len(oi) else '-'}); không đủ lịch sử"})
-            if len(oi):
-                oi.insert(0, "asset", asset)
-                oi.to_csv(raw_dir / f"{asset.lower()}_open_interest_recent.csv", index=False)
+            oi, n_missing = _oi_history(symbol, cfg)
+            oi.insert(0, "asset", asset)
+            oi_frames.append(oi)
+            src_logs.append({"asset": f"{asset}_open_interest", "symbol": symbol,
+                             "source": "Binance USDT-M Futures metrics (data.binance.vision)",
+                             "endpoint": cfg["derivatives"]["oi_metrics_url"], "interval": "5m -> 1d",
+                             "timezone": "UTC", "requested_start": cfg["derivatives"]["oi_start_date"],
+                             "actual_start": oi["date_utc"].min(), "actual_end": oi["date_utc"].max(),
+                             "n_rows": len(oi), "fetched_at_utc": fetched.isoformat(timespec="seconds"),
+                             "notes": f"giá trị ngày = ảnh chụp cuối ngày UTC; {n_missing} ngày không có file"})
         except SourceUnavailable as e:
             limits.append({"task": "C1-09", "asset": asset, "variable": "open_interest",
                            "status": "không dùng", "reason": str(e)})
     if frames:
         pd.concat(frames, ignore_index=True).to_csv(raw_dir / "derivatives_daily.csv", index=False)
+    if oi_frames:
+        pd.concat(oi_frames, ignore_index=True).to_csv(raw_dir / "open_interest_daily.csv", index=False)
     return src_logs, limits

@@ -1,9 +1,33 @@
-asset,variable,first_available,n_non_null,rule
-BTC,dxy,2018-03-02,3153,as-of available_at <= close of UTC candle
-BTC,spx,2018-03-02,3153,as-of available_at <= close of UTC candle
-BTC,vix,2018-03-02,3153,as-of available_at <= close of UTC candle
-BTC,funding_sum,2019-09-10,2596,tổng funding đã thanh toán trong ngày UTC t
-ETH,dxy,2018-03-02,3153,as-of available_at <= close of UTC candle
-ETH,spx,2018-03-02,3153,as-of available_at <= close of UTC candle
-ETH,vix,2018-03-02,3153,as-of available_at <= close of UTC candle
-ETH,funding_sum,2019-11-27,2518,tổng funding đã thanh toán trong ngày UTC t
+asset,variable,first_available,n_non_null,n_rows,rule
+BTC,dxy,2018-03-02,3153,3153,macro_daily.csv: DXY
+BTC,spx,2018-03-02,3153,3153,macro_daily.csv: SPX
+BTC,us10y,2018-03-02,3153,3153,macro_daily.csv: US10Y
+BTC,us2y,2018-03-02,3153,3153,macro_daily.csv: US2Y
+BTC,us3m,2018-03-02,3153,3153,macro_daily.csv: US3M
+BTC,vix,2018-03-02,3153,3153,macro_daily.csv: VIX
+BTC,defi_tvl,2018-03-02,3153,3153,crypto_market_daily.csv: DEFI_TVL
+BTC,defi_tvl_growth_7d,2018-03-02,3153,3153,ln(DEFI_TVL_d / DEFI_TVL_(d-7))
+BTC,mcap_btc,2025-10-21,363,3153,crypto_market_daily.csv: MCAP_BTC
+BTC,mcap_eth,2025-10-21,363,3153,crypto_market_daily.csv: MCAP_ETH
+BTC,stablecoin_supply,2020-01-02,2482,3153,crypto_market_daily.csv: STABLECOIN_SUPPLY
+BTC,stablecoin_supply_growth_7d,2020-01-09,2475,3153,ln(STABLECOIN_SUPPLY_d / STABLECOIN_SUPPLY_(d-7))
+BTC,term_spread_10y_2y,2018-03-02,3153,3153,us10y - us2y (cùng ngày quan sát)
+BTC,funding_sum,2019-09-10,2596,3153,tổng funding đã thanh toán trong ngày UTC t
+BTC,open_interest_value_usdt,2020-09-01,2239,3153,OI ảnh chụp cuối ngày UTC t
+BTC,oi_growth_7d,2020-09-08,2232,3153,ln(OI_t / OI_(t-7))
+ETH,dxy,2018-03-02,3153,3153,macro_daily.csv: DXY
+ETH,spx,2018-03-02,3153,3153,macro_daily.csv: SPX
+ETH,us10y,2018-03-02,3153,3153,macro_daily.csv: US10Y
+ETH,us2y,2018-03-02,3153,3153,macro_daily.csv: US2Y
+ETH,us3m,2018-03-02,3153,3153,macro_daily.csv: US3M
+ETH,vix,2018-03-02,3153,3153,macro_daily.csv: VIX
+ETH,defi_tvl,2018-03-02,3153,3153,crypto_market_daily.csv: DEFI_TVL
+ETH,defi_tvl_growth_7d,2018-03-02,3153,3153,ln(DEFI_TVL_d / DEFI_TVL_(d-7))
+ETH,mcap_btc,2025-10-21,363,3153,crypto_market_daily.csv: MCAP_BTC
+ETH,mcap_eth,2025-10-21,363,3153,crypto_market_daily.csv: MCAP_ETH
+ETH,stablecoin_supply,2020-01-02,2482,3153,crypto_market_daily.csv: STABLECOIN_SUPPLY
+ETH,stablecoin_supply_growth_7d,2020-01-09,2475,3153,ln(STABLECOIN_SUPPLY_d / STABLECOIN_SUPPLY_(d-7))
+ETH,term_spread_10y_2y,2018-03-02,3153,3153,us10y - us2y (cùng ngày quan sát)
+ETH,funding_sum,2019-11-27,2518,3153,tổng funding đã thanh toán trong ngày UTC t
+ETH,open_interest_value_usdt,2021-12-01,1783,3153,OI ảnh chụp cuối ngày UTC t
+ETH,oi_growth_7d,2021-12-08,1776,3153,ln(OI_t / OI_(t-7))

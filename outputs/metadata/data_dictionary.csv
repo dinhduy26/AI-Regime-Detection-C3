@@ -21,3 +21,14 @@ features,btc_eth_corr21,Tương quan trượt 21 ngày của log return BTC và 
 scaled_features,"z_log_return, z_rv21, z_log_dollar_volume",(x - mean_train) / std_train (ddof=0); scaler fit CHỈ trên train,z-score,C1,đầu vào HMM/GMM của C2
 features_ext,"vix, spx, dxy",Giá đóng cửa Mỹ ghép as-of theo available_at <= thời điểm nến đóng,điểm chỉ số,Yahoo/FRED,mở rộng RQ3
 features_ext,funding_sum / funding_mean / funding_n,Tổng/trung bình/số lần funding thanh toán trong ngày UTC,thập phân,Binance Futures,mở rộng RQ3
+features_ext,"us10y, us2y, us3m","Lợi suất trái phiếu Mỹ 10 năm / 2 năm / 3 tháng, ghép as-of",%/năm,FRED DGS10/DGS2/DGS3MO,mở rộng RQ3 (blueprint §3.3)
+features_ext,term_spread_10y_2y,"us10y - us2y, chỉ khi hai kỳ hạn cùng ngày quan sát",điểm %,FRED,mở rộng RQ3
+features_ext,stablecoin_supply,"Tổng stablecoin lưu hành (mọi loại peg quy USD), ghép as-of; để trống trước crypto_market.reliable_from (mặc định 2020-01-01: DefiLlama chưa theo dõi đủ giai đoạn đầu)",USD,DefiLlama,"mở rộng RQ3 (blueprint §2.4, §3.5)"
+features_ext,stablecoin_supply_growth_7d,ln(S_d / S_{d-7}) tính trên chuỗi gốc rồi ghép as-of; để trống nếu giá trị <= 0 hoặc thiếu,log,DefiLlama,mở rộng RQ3
+features_ext,"defi_tvl, defi_tvl_growth_7d",Tổng giá trị khóa DeFi và tăng trưởng 7 ngày (để trống nếu giá trị <= 0),USD / log,DefiLlama,robustness (blueprint §3.2)
+features_ext,"mcap_btc, mcap_eth","Vốn hóa thị trường (CoinGecko miễn phí, lịch sử giới hạn)",USD,CoinGecko,mô tả/robustness (blueprint §3.2)
+features_ext,cmc200,CMC Crypto 200 Index (nếu Yahoo có dữ liệu),điểm,Yahoo ^CMC200,mở rộng (blueprint §3.1)
+features_ext,"open_interest, open_interest_value_usdt",Open interest ảnh chụp HỢP LỆ cuối ngày UTC t (bỏ dòng lặp và ảnh chụp OI <= 0),hợp đồng / USDT,Binance Futures metrics (data.binance.vision),mở rộng RQ3 (blueprint §2.4)
+features_ext,oi_growth_7d,ln(OI_t / OI_{t-7}) theo giá trị USDT; để trống nếu giá trị <= 0 hoặc thiếu,log,Binance Futures,mở rộng RQ3
+features_ext,"<biến>_obs_date, <biến>_available_at",Ngày quan sát gốc và thời điểm có sẵn của giá trị đã ghép (kiểm chứng point-in-time),ngày / UTC,C1,kiểm toán
+"extension/features_sol, features_bnb",như features BTC/ETH,"SOL, BNB xử lý bằng đúng hàm và mốc chia mẫu của BTC/ETH",như trên,Binance Spot,tài sản mở rộng (blueprint §3.1)
