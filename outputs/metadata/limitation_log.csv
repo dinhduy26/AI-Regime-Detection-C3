@@ -1,0 +1,7 @@
+task,asset,variable,status,reason,updated_at_utc
+C1-08,ALL,vix,đã thu thập,"2017-01-03 -> 2026-10-16, 2463 phiên; nguồn Yahoo Finance (^VIX); ghép as-of theo available_at",2026-10-19T05:22:27+00:00
+C1-08,ALL,spx,đã thu thập,"2017-01-03 -> 2026-10-16, 2461 phiên; nguồn Yahoo Finance (^GSPC); ghép as-of theo available_at",2026-10-19T05:22:27+00:00
+C1-08,ALL,dxy,đã thu thập,"2017-01-03 -> 2026-10-16, 2463 phiên; nguồn Yahoo Finance (DX-Y.NYB); ghép as-of theo available_at",2026-10-19T05:22:27+00:00
+C1-09,BTC/ETH,funding_rate,đã thu thập,2019-09-10 -> 2026-10-18 (lịch sử perpetual),2026-10-19T05:22:27+00:00
+C1-09,BTC,open_interest,không dùng cho mô hình,API chỉ trả 30 ngày gần nhất (2026-09-20 -> 2026-10-19); không đủ lịch sử,
+C1-09,ETH,open_interest,không dùng cho mô hình,API chỉ trả 30 ngày gần nhất (2026-09-20 -> 2026-10-19); không đủ lịch sử,

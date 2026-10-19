@@ -1,0 +1,50 @@
+{
+  "run_at_utc": "2026-10-19T05:22:31+00:00",
+  "data_through_utc": {
+    "BTC": "2026-10-18",
+    "ETH": "2026-10-18"
+  },
+  "split_mode": "fixed_dates",
+  "duration_s": 3.8,
+  "python": "3.12.6",
+  "config_path": "C:\\crypto-regime-radar\\config\\config.yaml",
+  "config_version": "1.1.0",
+  "config_hash": "e6fe11de0397763a",
+  "steps": {
+    "collect": "bỏ qua — đã có dữ liệu thô (dùng --download để tải lại)",
+    "clean": "OK (0.8s)",
+    "features": "OK (1.4s)",
+    "reports": "OK (1.5s)",
+    "models": "chưa có — src.models.run chưa được tạo",
+    "backtest": "chưa có — src.evaluation.backtest_run chưa được tạo"
+  },
+  "output_hashes": {
+    "data/processed/features_btc.parquet": "4c51648e86f9ea35",
+    "data/processed/features_eth.parquet": "11bd401352bf2131",
+    "data/processed/features_ext_btc.parquet": "a77ce058604e449f",
+    "data/processed/features_ext_eth.parquet": "e62152b150b06af4",
+    "data/processed/prices_daily.parquet": "4e401ecf67c33014",
+    "data/processed/scaled_features_btc.parquet": "40233502bf80efba",
+    "data/processed/scaled_features_eth.parquet": "80cf98556a7a49a0",
+    "outputs/tables/B01_descriptives.csv": "26254090e74ad831",
+    "outputs/tables/B02_sample_manifest.csv": "3fdea5beb937a169",
+    "outputs/figures/H01_price_history.png": "7e3de65317f31db3",
+    "outputs/figures/H01_price_history.svg": "922292beef6799d1",
+    "outputs/metadata/data_dictionary.csv": "91e2a68c4690118f",
+    "outputs/metadata/data_quality.csv": "b25ad714dbc58435",
+    "outputs/metadata/excluded_rows.csv": "3b03e4dc5a3deb4a",
+    "outputs/metadata/extension_coverage.csv": "befebb9ca544a2b7",
+    "outputs/metadata/gap_report.csv": "79ad8c2bc4a19623",
+    "outputs/metadata/limitation_log.csv": "9be976a927e79c4a",
+    "outputs/metadata/source_log.csv": "b292933a0106b12a",
+    "outputs/metadata/split_manifest.json": "39e548837c565639",
+    "outputs/models/scaler_btc.joblib": "5d7be3918738b005",
+    "outputs/models/scaler_eth.joblib": "98e6fd824c8e0150",
+    "data/raw/btc_ohlcv.csv": "07a4962a4ca378d4",
+    "data/raw/btc_open_interest_recent.csv": "16fd93d9b1e48408",
+    "data/raw/derivatives_daily.csv": "7c09f790d8ba0c10",
+    "data/raw/eth_ohlcv.csv": "f9ed363bc6de62ae",
+    "data/raw/eth_open_interest_recent.csv": "3cca7d276a12733f",
+    "data/raw/macro_daily.csv": "84c996e42dcee7c2"
+  }
+}

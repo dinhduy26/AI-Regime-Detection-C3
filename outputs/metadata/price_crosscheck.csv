@@ -1,0 +1,5 @@
+asset,check,months,n_days_compared,n_mismatch,max_abs_diff_close,verdict,median_abs_diff_pct,p99_abs_diff_pct,corr_daily_log_return
+BTC,A: REST API vs data.binance.vision (cùng nguồn Binance),2018-03 2020-03 2021-05 2021-11 2022-06 2022-11 2024-03 2026-09,244,0,0.0,KHỚP TUYỆT ĐỐI,,,
+BTC,"B: Binance USDT vs Yahoo BTC-USD (nguồn khác, USD)",2017-08-17 -> 2026-10-17,3349,66,,NHẤT QUÁN,0.0865,2.3968,0.9912
+ETH,A: REST API vs data.binance.vision (cùng nguồn Binance),2018-03 2020-03 2021-05 2021-11 2022-06 2022-11 2024-03 2026-09,244,0,0.0,KHỚP TUYỆT ĐỐI,,,
+ETH,"B: Binance USDT vs Yahoo ETH-USD (nguồn khác, USD)",2017-11-09 -> 2026-10-17,3265,58,,NHẤT QUÁN,0.0926,2.8476,0.99378

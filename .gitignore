@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.env
+# Dữ liệu tải về & kết quả sinh ra: tái tạo được bằng run_pipeline.py
+# (bỏ comment 2 dòng dưới nếu nhóm KHÔNG muốn commit dữ liệu lên GitHub)
+# data/raw/*.csv
+# data/processed/*.parquet
+.DS_Store

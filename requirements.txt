@@ -1,0 +1,16 @@
+# Python >= 3.10. Minimum tested versions. Install: pip install -r requirements.txt
+# NOTE: keep this file ASCII-only (pip on Windows may read it with the cp1252 codec).
+pandas>=2.1
+numpy>=1.26
+pyarrow>=14.0
+requests>=2.31
+PyYAML>=6.0
+joblib>=1.3
+scikit-learn>=1.3
+scipy>=1.11
+matplotlib>=3.8
+pytest>=7.4
+# Only needed for macro data (C1-08, RQ3 extension)
+yfinance>=0.2.48
+# Time zone database (America/New_York) on Windows
+tzdata>=2023.3

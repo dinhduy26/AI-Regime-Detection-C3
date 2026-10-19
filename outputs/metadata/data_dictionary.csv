@@ -1,0 +1,23 @@
+file,variable,definition,unit,source,role
+prices_daily,asset,Mã tài sản BTC hoặc ETH,—,C1,khóa
+prices_daily,symbol,Cặp giao dịch Binance Spot (BTCUSDT/ETHUSDT),—,Binance,provenance
+prices_daily,date_utc,"Ngày UTC của nến (mở 00:00:00, đóng 23:59:59.999 UTC)",YYYY-MM-DD,Binance,khóa
+prices_daily,open/high/low/close,Giá mở/cao/thấp/đóng cửa của nến ngày,USDT,Binance /api/v3/klines,dữ liệu gốc
+prices_daily,base_volume,Khối lượng tính bằng tài sản cơ sở (BTC/ETH) — KHÔNG dùng cho HMM,BTC hoặc ETH,Binance (cột 5),đối soát
+prices_daily,quote_volume,Giá trị giao dịch theo đồng định giá,USDT,Binance (cột 7),đầu vào log_dollar_volume
+prices_daily,n_trades,Số giao dịch trong ngày,lệnh,Binance (cột 8),mô tả
+prices_daily,source,Nguồn của từng dòng,—,C1,provenance
+prices_daily,available_at_utc,Thời điểm thông tin của nến được coi là đã biết (= nến đóng),ISO-8601 UTC,C1,point-in-time
+prices_daily,segment_id,Mã đoạn liên tục; tăng 1 sau mỗi khoảng ngày thiếu,số nguyên,C1,xử lý gap
+features,log_return,"ln(C_t / C_{t-1}), C_{t-1} cùng đoạn liên tục",thập phân/ngày,C1,HMM lõi
+features,rv21,Độ lệch chuẩn mẫu (ddof=1) của 21 log return t-20..t; không annualize,thập phân/ngày,C1,HMM lõi
+features,log_dollar_volume,ln(1 + quote_volume),log(1+USDT),C1,HMM lõi
+features,simple_return,C_t / C_{t-1} - 1,thập phân/ngày,C1,NAV backtest (C3); không vào HMM
+features,split,train / validation / test theo thời gian 60/20/20,—,C1,chia mẫu
+features,"rv7, rv14, rv30",Như rv21 với cửa sổ 7/14/30,thập phân/ngày,C1,"tùy chọn, robustness"
+features,rv21_annualized,rv21 × sqrt(365),thập phân/năm,C1,chỉ mô tả
+features,amihud_illiq,|simple_return| / quote_volume; để trống nếu quote_volume = 0,1/USDT,C1,"tùy chọn; proxy, không phải spread"
+features,btc_eth_corr21,Tương quan trượt 21 ngày của log return BTC và ETH; cần đủ 21 ngày trùng,"[-1, 1]",C1,"tùy chọn, mô tả"
+scaled_features,"z_log_return, z_rv21, z_log_dollar_volume",(x - mean_train) / std_train (ddof=0); scaler fit CHỈ trên train,z-score,C1,đầu vào HMM/GMM của C2
+features_ext,"vix, spx, dxy",Giá đóng cửa Mỹ ghép as-of theo available_at <= thời điểm nến đóng,điểm chỉ số,Yahoo/FRED,mở rộng RQ3
+features_ext,funding_sum / funding_mean / funding_n,Tổng/trung bình/số lần funding thanh toán trong ngày UTC,thập phân,Binance Futures,mở rộng RQ3

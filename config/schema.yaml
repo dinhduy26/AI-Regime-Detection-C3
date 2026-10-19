@@ -1,0 +1,116 @@
+# =====================================================================
+# MANIFEST SCHEMA DUY NHẤT (A-01) — hợp đồng dữ liệu C1 -> C2 -> C3 -> Research
+# Tên cột ở đây là tên CHUẨN. Không dùng tên cũ: rv_21d, log_volume (base volume).
+# Code C1 kiểm tra đầu ra theo file này trước khi ghi.
+# =====================================================================
+version: "1.1.0"
+conventions:
+  timezone: UTC
+  date_column: date_utc          # ngày UTC của nến (00:00 -> 23:59:59.999 UTC)
+  asset_values: [BTC, ETH]
+  returns_unit: decimal_per_day  # KHÔNG phải phần trăm
+  volume_unit_core: USDT (quote_volume)
+  file_format: parquet cho dữ liệu, csv cho bảng bài báo, json cho manifest
+
+files:
+  raw_ohlcv:
+    path: "data/raw/{asset_lower}_ohlcv.csv"
+    owner: C1
+    key: [date_utc]
+    columns: [asset, symbol, date_utc, open_time_ms, close_time_ms, open, high, low, close,
+              base_volume, quote_volume, n_trades, taker_buy_base_volume,
+              taker_buy_quote_volume, source, source_url, fetched_at_utc]
+
+  prices_daily:
+    path: data/processed/prices_daily.parquet
+    owner: C1
+    consumers: [C2, C3]
+    key: [asset, date_utc]
+    columns: [asset, symbol, date_utc, open, high, low, close, base_volume, quote_volume,
+              n_trades, source, available_at_utc, segment_id]
+
+  features:
+    path: "data/processed/features_{asset_lower}.parquet"
+    owner: C1
+    consumers: [C2, C3]
+    key: [date_utc]
+    columns: [asset, date_utc, log_return, rv21, log_dollar_volume, simple_return,
+              segment_id, split]
+    optional_columns: [rv7, rv14, rv30, rv21_annualized, amihud_illiq, btc_eth_corr21]
+    core_hmm_features: [log_return, rv21, log_dollar_volume]
+
+  scaled_features:
+    path: "data/processed/scaled_features_{asset_lower}.parquet"
+    owner: C1
+    consumers: [C2]
+    key: [date_utc]
+    columns: [asset, date_utc, segment_id, split, z_log_return, z_rv21, z_log_dollar_volume]
+
+  scaler:
+    path: "outputs/models/scaler_{asset_lower}.joblib"
+    owner: C1
+    consumers: [C2]
+
+  split_manifest:
+    path: outputs/metadata/split_manifest.json
+    owner: C1
+    consumers: [C2, C3, Research]
+
+  gap_report:
+    path: outputs/metadata/gap_report.csv
+    owner: C1
+    key: [asset, missing_from]
+    columns: [asset, missing_from, missing_to, gap_length, last_before, first_after, handling]
+
+  data_quality:
+    path: outputs/metadata/data_quality.csv
+    owner: C1
+    columns: [asset, check, n_flagged, detail, action]
+
+  source_log:
+    path: outputs/metadata/source_log.csv
+    owner: C1
+    columns: [asset, symbol, source, endpoint, interval, timezone, requested_start,
+              actual_start, actual_end, n_rows, fetched_at_utc, notes]
+
+  collection_config:
+    path: config/collection_config.yaml
+    owner: C1
+    note: tự sinh từ config.yaml (Excel C1-02); không sửa tay
+
+  limitation_log:
+    path: outputs/metadata/limitation_log.csv
+    owner: C1
+    consumers: [Research, C2]
+    columns: [task, asset, variable, status, reason, updated_at_utc]
+
+  data_dictionary:
+    path: outputs/metadata/data_dictionary.csv
+    owner: C1
+
+  B01_descriptives:
+    path: outputs/tables/B01_descriptives.csv
+    owner: C1
+    consumers: [Research]
+    key: [asset, variable, period]
+    columns: [asset, variable, period, n, mean, median, sd, min, max, skew, kurtosis,
+              kurtosis_type, start, end]
+
+  B02_sample_manifest:
+    path: outputs/tables/B02_sample_manifest.csv
+    owner: C1
+    consumers: [Research]
+    key: [asset]
+    columns: [asset, symbol, source, start, end, n_raw, n_clean, n_missing_days, n_gaps,
+              n_warmup_dropped, n_eligible, n_train, n_val, n_test, train_start, train_end,
+              val_start, val_end, test_start, test_end, gap_handling_method, split_mode,
+              share_train, share_val, share_test, data_through_utc, missing]
+
+  H01_price_history:
+    path: outputs/figures/H01_price_history.png
+    owner: C1
+    consumers: [Research, C3]
+
+  run_manifest:
+    path: outputs/metadata/run_manifest.json
+    owner: C1

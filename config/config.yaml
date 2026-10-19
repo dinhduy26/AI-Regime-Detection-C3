@@ -1,0 +1,109 @@
+# =====================================================================
+# CẤU HÌNH CHUNG — Crypto Market Regime Radar
+# Mọi tham số của pipeline nằm ở đây; KHÔNG viết cứng trong code.
+# Phiên bản cấu hình: tăng version khi đổi bất kỳ tham số nào ảnh hưởng kết quả.
+# =====================================================================
+version: "1.1.0"
+project: crypto-market-regime-radar
+
+paths:
+  raw: data/raw
+  interim: data/interim
+  processed: data/processed
+  tables: outputs/tables
+  figures: outputs/figures
+  metadata: outputs/metadata
+  models: outputs/models
+  predictions: outputs/predictions
+
+# ---------------------------------------------------------------------
+# Tài sản lõi: BTCUSDT, ETHUSDT — Binance Spot, nến 1 ngày UTC
+# ---------------------------------------------------------------------
+assets:
+  BTC: {symbol: BTCUSDT, quote: USDT}
+  ETH: {symbol: ETHUSDT, quote: USDT}
+
+collection:
+  interval: 1d
+  # Ngày bắt đầu yêu cầu. Binance tự trả về từ nến đầu tiên thực có;
+  # ngày bắt đầu THỰC TẾ được ghi trong source_log.csv, không giả định.
+  start_date: "2017-01-01"
+  # null = lấy đến nến ngày gần nhất ĐÃ ĐÓNG. Có thể đặt "2026-10-18" để đóng băng mẫu.
+  end_date: null
+  request_limit: 1000          # tối đa số nến mỗi request của /api/v3/klines
+  max_retries: 6
+  backoff_base_seconds: 1.5    # chờ 1.5, 3, 6, 12... giây giữa các lần thử lại
+  timeout_seconds: 30
+  sleep_between_requests: 0.25
+  # Các endpoint cùng một nguồn (Binance Spot), thử theo thứ tự.
+  base_urls:
+    - https://api.binance.com
+    - https://api1.binance.com
+    - https://api2.binance.com
+    - https://api3.binance.com
+    - https://data-api.binance.vision
+  # Nguồn dự phòng cùng provenance: kho file lịch sử công khai của Binance
+  vision_base_url: https://data.binance.vision/data/spot/monthly/klines
+
+cleaning:
+  # Cú nhảy |log return| lớn hơn ngưỡng này được GHI vào data_quality (không tự xóa)
+  extreme_abs_log_return: 0.30
+  # Cách xử lý chuỗi bị đứt khi có ngày thiếu:
+  #   longest_segment : HMM chỉ dùng đoạn liên tục dài nhất (mặc định của đặc tả)
+  #   multi_segment   : giữ mọi đoạn đủ dài, có segment_id để C2 reset trạng thái ẩn
+  gap_handling_method: longest_segment
+
+features:
+  core: [log_return, rv21, log_dollar_volume]
+  rv_window: 21
+  rv_ddof: 1                   # RV21 dùng độ lệch chuẩn MẪU (n-1)
+  annualization_days: 365      # chỉ dùng khi mô tả; core RV21 KHÔNG annualize
+  # Tùy chọn / robustness — tính thêm, không đưa vào HMM lõi
+  optional_rv_windows: [7, 14, 30]
+  amihud:
+    enabled: true
+    zero_volume_policy: nan    # Q = 0 -> đánh dấu thiếu thay vì cộng epsilon
+  btc_eth_corr:
+    enabled: true
+    window: 21
+
+split:
+  # fixed_dates (mặc định): mốc train/validation CỐ ĐỊNH; dữ liệu mới mỗi ngày chỉ nối vào
+  #   cuối tập test -> train, validation, scaler và mô hình C2 không đổi khi cập nhật
+  #   (đáp ứng Excel C2-04 "test chưa bị truy cập", C2-12 "Frozen models + test",
+  #    C2-13 "đóng băng split test").
+  # ratio: chia lại 60/20/20 theo N mỗi lần chạy (mốc sẽ dịch khi có dữ liệu mới).
+  mode: fixed_dates
+  train: 0.60
+  validation: 0.20
+  # Mốc chốt bằng 60/20/20 trên mẫu Binance đến 2026-10-18 (N = 3153/tài sản,
+  # train 1891 | validation 630 | test 632). Chỉ đổi khi cả nhóm thống nhất + tăng version.
+  anchored_on: "2026-10-18"
+  train_end: "2023-05-05"
+  validation_end: "2025-01-24"
+
+scaling:
+  method: standard             # (x - mean_train) / std_train
+  std_ddof: 0                  # scaler dùng độ lệch chuẩn TỔNG THỂ (giống sklearn)
+  zero_std_policy: scale_one   # std = 0 -> scale = 1 và cảnh báo
+
+# ---------------------------------------------------------------------
+# MỞ RỘNG (RQ3) — chỉ chạy khi bật; không ảnh hưởng feature lõi
+# ---------------------------------------------------------------------
+macro:
+  enabled: false
+  start_date: "2017-01-01"
+  # Mã Yahoo Finance; DXY có thể không có lịch sử đầy đủ -> sẽ ghi vào log
+  tickers:
+    VIX: "^VIX"
+    SPX: "^GSPC"
+    DXY: "DX-Y.NYB"
+  # Giá đóng cửa Mỹ ngày d coi như CHỈ CÓ SẴN sau 00:00 UTC ngày d + lag.
+  # lag = 1 nghĩa là: tín hiệu của nến crypto ngày d+1 mới được dùng giá ngày d.
+  availability_lag_days: 1
+
+derivatives:
+  enabled: false
+  futures_base_url: https://fapi.binance.com
+  symbols: {BTC: BTCUSDT, ETH: ETHUSDT}
+  funding_start_date: "2019-09-01"

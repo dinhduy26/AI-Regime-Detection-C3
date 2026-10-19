@@ -1,0 +1,32 @@
+_ghi_chu: TỰ SINH từ config/config.yaml — KHÔNG sửa tay file này
+generated_at_utc: '2026-10-19T05:22:28+00:00'
+source_config: config/config.yaml
+config_version: 1.1.0
+config_hash: e6fe11de0397763a
+source: Binance Spot (REST /api/v3/klines; dự phòng data.binance.vision)
+market: spot
+timezone: UTC
+candle_rule: chỉ nến đã đóng
+assets:
+  BTC:
+    symbol: BTCUSDT
+    quote: USDT
+  ETH:
+    symbol: ETHUSDT
+    quote: USDT
+collection:
+  interval: 1d
+  start_date: '2017-01-01'
+  end_date: null
+  request_limit: 1000
+  max_retries: 6
+  backoff_base_seconds: 1.5
+  timeout_seconds: 30
+  sleep_between_requests: 0.25
+  base_urls:
+  - https://api.binance.com
+  - https://api1.binance.com
+  - https://api2.binance.com
+  - https://api3.binance.com
+  - https://data-api.binance.vision
+  vision_base_url: https://data.binance.vision/data/spot/monthly/klines

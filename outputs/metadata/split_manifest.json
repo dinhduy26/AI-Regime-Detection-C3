@@ -1,0 +1,178 @@
+{
+  "created_at_utc": "2026-10-19T05:22:29+00:00",
+  "config_version": "1.1.0",
+  "config_hash": "e6fe11de0397763a",
+  "gap_handling_method": "longest_segment",
+  "core_features": [
+    "log_return",
+    "rv21",
+    "log_dollar_volume"
+  ],
+  "split_config": {
+    "mode": "fixed_dates",
+    "train": 0.6,
+    "validation": 0.2,
+    "anchored_on": "2026-10-18",
+    "train_end": "2023-05-05",
+    "validation_end": "2025-01-24"
+  },
+  "prices_daily_hash": "4e401ecf67c33014",
+  "assets": {
+    "BTC": {
+      "n_rows_clean": 3349,
+      "n_rows_dropped_other_segments": 175,
+      "n_warmup_dropped": 21,
+      "n_eligible": 3153,
+      "segments": [
+        {
+          "segment_id": 0,
+          "start": "2017-08-17",
+          "end": "2018-02-07",
+          "n_days": 175,
+          "n_eligible": 154,
+          "selected": false
+        },
+        {
+          "segment_id": 1,
+          "start": "2018-02-09",
+          "end": "2026-10-18",
+          "n_days": 3174,
+          "n_eligible": 3153,
+          "selected": true
+        }
+      ],
+      "selected_segments": [
+        1
+      ],
+      "split_mode": "fixed_dates",
+      "train": {
+        "start": "2018-03-02",
+        "end": "2023-05-05",
+        "n": 1891,
+        "share": 0.5997
+      },
+      "validation": {
+        "start": "2023-05-06",
+        "end": "2025-01-24",
+        "n": 630,
+        "share": 0.1998
+      },
+      "test": {
+        "start": "2025-01-25",
+        "end": "2026-10-18",
+        "n": 632,
+        "share": 0.2004
+      },
+      "split_rule": "mốc cố định: train <= 2023-05-05 < validation <= 2025-01-24 < test (đến ngày mới nhất); mốc được chốt bằng 60/20/20 trên dữ liệu đến 2026-10-18; không shuffle",
+      "data_through_utc": "2026-10-18",
+      "latest_clean_date_utc": "2026-10-18",
+      "latest_date_in_sample": true,
+      "scaler": {
+        "features": [
+          "log_return",
+          "rv21",
+          "log_dollar_volume"
+        ],
+        "mean": {
+          "log_return": 0.0005256395792917044,
+          "rv21": 0.03475818852784513,
+          "log_dollar_volume": 20.616654685294396
+        },
+        "scale": {
+          "log_return": 0.03782126157563769,
+          "rv21": 0.015098197352419846,
+          "log_dollar_volume": 1.2890035975088932
+        },
+        "std_ddof": 0,
+        "zero_std_features": [],
+        "fit_on": "train",
+        "n_fit": 1891,
+        "path": "outputs/models/scaler_btc.joblib"
+      },
+      "files": {
+        "features": "data/processed/features_btc.parquet",
+        "scaled_features": "data/processed/scaled_features_btc.parquet"
+      }
+    },
+    "ETH": {
+      "n_rows_clean": 3349,
+      "n_rows_dropped_other_segments": 175,
+      "n_warmup_dropped": 21,
+      "n_eligible": 3153,
+      "segments": [
+        {
+          "segment_id": 0,
+          "start": "2017-08-17",
+          "end": "2018-02-07",
+          "n_days": 175,
+          "n_eligible": 154,
+          "selected": false
+        },
+        {
+          "segment_id": 1,
+          "start": "2018-02-09",
+          "end": "2026-10-18",
+          "n_days": 3174,
+          "n_eligible": 3153,
+          "selected": true
+        }
+      ],
+      "selected_segments": [
+        1
+      ],
+      "split_mode": "fixed_dates",
+      "train": {
+        "start": "2018-03-02",
+        "end": "2023-05-05",
+        "n": 1891,
+        "share": 0.5997
+      },
+      "validation": {
+        "start": "2023-05-06",
+        "end": "2025-01-24",
+        "n": 630,
+        "share": 0.1998
+      },
+      "test": {
+        "start": "2025-01-25",
+        "end": "2026-10-18",
+        "n": 632,
+        "share": 0.2004
+      },
+      "split_rule": "mốc cố định: train <= 2023-05-05 < validation <= 2025-01-24 < test (đến ngày mới nhất); mốc được chốt bằng 60/20/20 trên dữ liệu đến 2026-10-18; không shuffle",
+      "data_through_utc": "2026-10-18",
+      "latest_clean_date_utc": "2026-10-18",
+      "latest_date_in_sample": true,
+      "scaler": {
+        "features": [
+          "log_return",
+          "rv21",
+          "log_dollar_volume"
+        ],
+        "mean": {
+          "log_return": 0.0004380379419409955,
+          "rv21": 0.04598745965197091,
+          "log_dollar_volume": 19.54751705428765
+        },
+        "scale": {
+          "log_return": 0.04990128403579203,
+          "rv21": 0.01899190643393562,
+          "log_dollar_volume": 1.5254874973061028
+        },
+        "std_ddof": 0,
+        "zero_std_features": [],
+        "fit_on": "train",
+        "n_fit": 1891,
+        "path": "outputs/models/scaler_eth.joblib"
+      },
+      "files": {
+        "features": "data/processed/features_eth.parquet",
+        "scaled_features": "data/processed/scaled_features_eth.parquet"
+      }
+    }
+  },
+  "data_through_utc": {
+    "BTC": "2026-10-18",
+    "ETH": "2026-10-18"
+  }
+}

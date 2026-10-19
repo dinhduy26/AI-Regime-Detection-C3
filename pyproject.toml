@@ -1,0 +1,12 @@
+[project]
+name = "crypto-regime-radar"
+version = "0.1.0"
+description = "AI Crypto Market Regime Detection — HMM/GMM regime radar cho BTC & ETH"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 110

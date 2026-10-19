@@ -1,0 +1,9 @@
+asset,variable,first_available,n_non_null,rule
+BTC,dxy,2018-03-02,3153,as-of available_at <= close of UTC candle
+BTC,spx,2018-03-02,3153,as-of available_at <= close of UTC candle
+BTC,vix,2018-03-02,3153,as-of available_at <= close of UTC candle
+BTC,funding_sum,2019-09-10,2596,tổng funding đã thanh toán trong ngày UTC t
+ETH,dxy,2018-03-02,3153,as-of available_at <= close of UTC candle
+ETH,spx,2018-03-02,3153,as-of available_at <= close of UTC candle
+ETH,vix,2018-03-02,3153,as-of available_at <= close of UTC candle
+ETH,funding_sum,2019-11-27,2518,tổng funding đã thanh toán trong ngày UTC t

@@ -1,0 +1,21 @@
+asset,check,n_flagged,detail,action
+BTC,số dòng thô,3350,,—
+BTC,dòng không hợp lệ (OHLC/volume/thời gian),1,2018-02-08,"loại, ghi excluded_rows.csv"
+BTC,"trùng (asset,date) giống hệt",0,,giữ 1 bản
+BTC,"trùng (asset,date) mâu thuẫn",0,,"loại cả ngày, coi như thiếu"
+BTC,ngày thiếu trong lịch UTC,1,1 khoảng đứt,không điền; xem gap_report.csv
+BTC,số đoạn liên tục,2,,gap_handling_method=longest_segment
+BTC,|log return| > 0.3,1,2020-03-12,"chỉ ghi nhận, giữ nguyên (biến động thật cần kiểm tra thủ công)"
+BTC,quote_volume = 0,0,,giữ; log_dollar_volume = ln(1+0) = 0; amihud để trống
+BTC,nguồn dữ liệu,1,Binance Spot REST /api/v3/klines,ghi provenance
+BTC,số dòng sạch,3349,2017-08-17 -> 2026-10-18,—
+ETH,số dòng thô,3350,,—
+ETH,dòng không hợp lệ (OHLC/volume/thời gian),1,2018-02-08,"loại, ghi excluded_rows.csv"
+ETH,"trùng (asset,date) giống hệt",0,,giữ 1 bản
+ETH,"trùng (asset,date) mâu thuẫn",0,,"loại cả ngày, coi như thiếu"
+ETH,ngày thiếu trong lịch UTC,1,1 khoảng đứt,không điền; xem gap_report.csv
+ETH,số đoạn liên tục,2,,gap_handling_method=longest_segment
+ETH,|log return| > 0.3,2,2020-03-12; 2021-05-19,"chỉ ghi nhận, giữ nguyên (biến động thật cần kiểm tra thủ công)"
+ETH,quote_volume = 0,0,,giữ; log_dollar_volume = ln(1+0) = 0; amihud để trống
+ETH,nguồn dữ liệu,1,Binance Spot REST /api/v3/klines,ghi provenance
+ETH,số dòng sạch,3349,2017-08-17 -> 2026-10-18,—
