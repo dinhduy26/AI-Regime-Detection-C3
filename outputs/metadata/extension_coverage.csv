@@ -1,10 +1,13 @@
 asset,variable,first_available,n_non_null,n_rows,rule
 BTC,dxy,2018-03-02,3153,3153,macro_daily.csv: DXY
+BTC,dxy_return_1d,2018-03-02,3153,3153,ln(DXY_d / DXY_phiên trước); tính trên chuỗi phiên Mỹ gốc rồi ghép as-of
 BTC,spx,2018-03-02,3153,3153,macro_daily.csv: SPX
+BTC,spx_return_1d,2018-03-02,3153,3153,ln(SPX_d / SPX_phiên trước); tính trên chuỗi phiên Mỹ gốc rồi ghép as-of
 BTC,us10y,2018-03-02,3153,3153,macro_daily.csv: US10Y
 BTC,us2y,2018-03-02,3153,3153,macro_daily.csv: US2Y
 BTC,us3m,2018-03-02,3153,3153,macro_daily.csv: US3M
 BTC,vix,2018-03-02,3153,3153,macro_daily.csv: VIX
+BTC,vix_change_1d,2018-03-02,3153,3153,VIX_d - VIX_phiên trước (điểm); tính trên chuỗi phiên Mỹ gốc rồi ghép as-of
 BTC,defi_tvl,2018-03-02,3153,3153,crypto_market_daily.csv: DEFI_TVL
 BTC,defi_tvl_growth_7d,2018-03-02,3153,3153,ln(DEFI_TVL_d / DEFI_TVL_(d-7))
 BTC,mcap_btc,2025-10-21,363,3153,crypto_market_daily.csv: MCAP_BTC
@@ -16,11 +19,14 @@ BTC,funding_sum,2019-09-10,2596,3153,tổng funding đã thanh toán trong ngày
 BTC,open_interest_value_usdt,2020-09-01,2239,3153,OI ảnh chụp cuối ngày UTC t
 BTC,oi_growth_7d,2020-09-08,2232,3153,ln(OI_t / OI_(t-7))
 ETH,dxy,2018-03-02,3153,3153,macro_daily.csv: DXY
+ETH,dxy_return_1d,2018-03-02,3153,3153,ln(DXY_d / DXY_phiên trước); tính trên chuỗi phiên Mỹ gốc rồi ghép as-of
 ETH,spx,2018-03-02,3153,3153,macro_daily.csv: SPX
+ETH,spx_return_1d,2018-03-02,3153,3153,ln(SPX_d / SPX_phiên trước); tính trên chuỗi phiên Mỹ gốc rồi ghép as-of
 ETH,us10y,2018-03-02,3153,3153,macro_daily.csv: US10Y
 ETH,us2y,2018-03-02,3153,3153,macro_daily.csv: US2Y
 ETH,us3m,2018-03-02,3153,3153,macro_daily.csv: US3M
 ETH,vix,2018-03-02,3153,3153,macro_daily.csv: VIX
+ETH,vix_change_1d,2018-03-02,3153,3153,VIX_d - VIX_phiên trước (điểm); tính trên chuỗi phiên Mỹ gốc rồi ghép as-of
 ETH,defi_tvl,2018-03-02,3153,3153,crypto_market_daily.csv: DEFI_TVL
 ETH,defi_tvl_growth_7d,2018-03-02,3153,3153,ln(DEFI_TVL_d / DEFI_TVL_(d-7))
 ETH,mcap_btc,2025-10-21,363,3153,crypto_market_daily.csv: MCAP_BTC

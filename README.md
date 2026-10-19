@@ -58,17 +58,19 @@ python run_pipeline.py
 
 | Nhóm | Biến | Nguồn | Căn cứ |
 |---|---|---|---|
-| Vĩ mô (`--macro`) | VIX, S&P 500, DXY | Yahoo Finance | Excel C1-08 |
+| Vĩ mô (`--macro`) | VIX, S&P 500, DXY + thay đổi 1 phiên (`spx_return_1d`, `dxy_return_1d`, `vix_change_1d`) | Yahoo Finance (FRED dự phòng) | Excel C1-08; blueprint §3.3 |
 | | Lợi suất trái phiếu Mỹ 10 năm, 2 năm, 3 tháng; term spread 10Y–2Y | FRED | Blueprint §3.3 |
 | Crypto (`--crypto-market`) | Stablecoin supply + tăng trưởng 7 ngày | DefiLlama | Blueprint §2.4, §3.5; tài liệu coder §1.7 |
 | | DeFi TVL + tăng trưởng 7 ngày | DefiLlama | Blueprint §3.2 |
 | | Market cap BTC, ETH (lịch sử giới hạn ở bản miễn phí) | CoinGecko | Blueprint §3.2 |
-| | CMC Crypto 200 Index (nếu Yahoo có) | Yahoo Finance | Blueprint §3.1 |
+| | CMC Crypto 200 Index — hiện Yahoo không còn dữ liệu, ghi "không dùng" trong `limitation_log.csv` | Yahoo Finance | Blueprint §3.1 |
 | Phái sinh (`--derivatives`) | Funding rate | Binance Futures API | Excel C1-09 |
 | | Open interest **có lịch sử** + tăng trưởng 7 ngày | data.binance.vision (metrics) | Excel C1-09; blueprint §2.4 |
 | Tài sản (`--extra-assets`) | SOL, BNB (xử lý giống hệt BTC/ETH) | Binance Spot | Blueprint §3.1 |
 
-Mọi biến mở rộng được ghép **as-of** (chỉ dùng giá trị đã công bố trước khi nến ngày t đóng) vào `features_ext_{btc,eth}.parquet`, không đổi feature lõi của HMM. SOL/BNB ra thư mục `data/processed/extension/`. Trạng thái từng biến: `outputs/metadata/limitation_log.csv`. Bước tải open interest lịch sử mất vài phút vì phải tải từng file ngày.
+Mọi biến mở rộng được ghép **as-of** (chỉ dùng giá trị đã công bố trước khi nến ngày t đóng) vào `features_ext_{btc,eth}.parquet`, không đổi feature lõi của HMM. SOL/BNB ra thư mục `data/processed/extension/`. Trạng thái từng biến: `outputs/metadata/limitation_log.csv`; độ phủ thực tế từng biến: `outputs/metadata/extension_coverage.csv`. Bước tải open interest lịch sử mất vài phút vì phải tải từng file ngày.
+
+Giới hạn do nguồn (đã ghi trong log, không tạo số liệu thay thế): market cap CoinGecko bản miễn phí chỉ có 365 ngày gần nhất; open interest BTC có từ 09/2020, ETH từ 12/2021; stablecoin supply chỉ dùng từ 2020-01-01 (trước đó DefiLlama theo dõi chưa đủ); CMC200 không có dữ liệu.
 
 ## 3. Chạy pipeline
 
@@ -77,6 +79,8 @@ python run_pipeline.py            # clean -> features -> reports (dùng dữ li�
 python run_pipeline.py --download # tải lại dữ liệu rồi chạy toàn bộ
 pytest -q                         # kiểm thử nghiệm thu C1 trên dữ liệu thật
 ```
+
+Kết quả đúng: **30 passed**, không có test nào bị skip (test chỉ skip khi chưa tải dữ liệu tương ứng).
 
 Khi C2 tạo `src/models/run.py` và C3 tạo `src/evaluation/backtest_run.py`, mỗi file có hàm `run(cfg)`, thì `run_pipeline.py` sẽ tự gọi thêm hai bước đó.
 
@@ -97,6 +101,15 @@ Mốc chia mẫu được **cố định theo ngày** (`split.mode: fixed_dates`
 | Test | từ 2025-01-25 đến **ngày mới nhất** | dài thêm mỗi ngày |
 
 Nhờ vậy train, validation, scaler và mô hình của C2 không đổi khi cập nhật (Excel C2-04, C2-12, C2-13). Test `test_11` kiểm chứng điều này.
+
+**Dữ liệu mở rộng không tự cập nhật** theo lệnh trên (lệnh chỉ tải lại BTC/ETH). Khi cần biến mở rộng (VIX, S&P, funding, OI, stablecoin…) cho những ngày mới nhất, chạy thêm:
+
+```bash
+python -m src.data.collect --skip-core --all-extensions
+python run_pipeline.py
+```
+
+Nếu không chạy, các biến mở rộng giữ giá trị của lần tải cuối (vẫn đúng quy tắc point-in-time, chỉ là chưa mới).
 
 **Tự động hóa trên Windows:** mở Task Scheduler → Create Basic Task → chọn Daily lúc 07:05 → Action "Start a program" → chọn `scripts\update_daily.bat`. Nhật ký ghi vào `outputs/metadata/update_log.txt`. Trên macOS/Linux dùng `scripts/update_daily.sh` với cron.
 
@@ -129,9 +142,13 @@ Ngày nào lệch được liệt kê trong `price_crosscheck_days.csv` để xe
 | `data/processed/features_{btc,eth}.parquet` | `log_return, rv21, log_dollar_volume, simple_return, segment_id, split` và các cột tùy chọn | C2, C3 |
 | `data/processed/scaled_features_{btc,eth}.parquet` | z-score, scaler fit **chỉ trên train** | C2 |
 | `outputs/models/scaler_{btc,eth}.joblib` | Scaler đã fit | C2 |
+| `data/processed/features_ext_{btc,eth}.parquet` | Biến mở rộng RQ3 ghép as-of (vĩ mô, trái phiếu, stablecoin, TVL, market cap, funding, OI), kèm `<biến>_obs_date`, `<biến>_available_at` | C2 (RQ3, robustness) |
+| `data/processed/extension/` | SOL, BNB: giá sạch, feature, scaled feature (cùng quy tắc BTC/ETH) | C2 (robustness) |
 | `outputs/metadata/split_manifest.json` | Chế độ chia, ngày cắt train/val/test, số dòng, tỷ lệ, warm-up, segment, tham số scaler, `data_through_utc` | C2, C3, Research |
 | `outputs/metadata/gap_report.csv` | Các khoảng ngày thiếu và cách xử lý | C2, C3, Research |
 | `outputs/metadata/data_quality.csv`, `excluded_rows.csv` | Báo cáo kiểm toán dữ liệu | QA |
+| `outputs/metadata/price_crosscheck.csv`, `price_crosscheck_days.csv` | Kết quả đối soát giá với data.binance.vision và Yahoo | QA, Research |
+| `outputs/metadata/extension_coverage.csv` | Ngày bắt đầu và số ngày có dữ liệu của từng biến mở rộng | C2, Research |
 | `outputs/metadata/source_log.csv` | Nguồn, endpoint, thời điểm tải, độ phủ thực tế | Research |
 | `config/collection_config.yaml` | Cấu hình thu thập (tự sinh từ `config.yaml`, Excel C1-02) | Research, QA |
 | `outputs/metadata/limitation_log.csv` | Trạng thái và giới hạn của biến mở rộng VIX/DXY/S&P/funding/OI (Excel C1-08/09) | Research, C2 |
@@ -143,7 +160,20 @@ Ngày nào lệch được liệt kê trong `price_crosscheck_days.csv` để xe
 
 Hợp đồng dữ liệu đầy đủ nằm ở `config/schema.yaml` và `docs/A01_data_contract.md`.
 
-## 7. Tái lập kết quả (tài liệu chung §5.3)
+## 7. Dành cho C2 và C3 (đọc trước khi dùng dữ liệu)
+
+1. **Cài đúng phiên bản:** `pip install -r requirements-lock.txt` (không dùng `requirements.txt`), để kết quả trùng khớp giữa các máy.
+2. **Kiểm tra dữ liệu trước khi làm:** `pytest -q` phải báo **30 passed**.
+3. **Không sửa tay** file trong `data/processed/` và `outputs/models/`. Cần feature khác hoặc cách xử lý khác thì báo C1 sửa code, để cả nhóm vẫn dùng chung một nguồn.
+4. **Không đổi** `split.train_end`, `split.validation_end` trong `config/config.yaml`. Đổi mốc thì scaler, mô hình và mọi kết quả phải chạy lại từ đầu.
+5. **Thư viện riêng tự thêm:** C2 thêm `hmmlearn`, C3 thêm `streamlit`, `plotly`… vào `requirements.txt`, rồi cập nhật lại `requirements-lock.txt`.
+6. **Dữ liệu dùng cho mô hình:**
+   - C2: `data/processed/scaled_features_{btc,eth}.parquet` (cột `z_log_return`, `z_rv21`, `z_log_dollar_volume`; lọc theo cột `split`). Biến cho RQ3: `features_ext_{btc,eth}.parquet`.
+   - C3: `data/processed/features_{btc,eth}.parquet` (cột `simple_return` cho NAV), `prices_daily.parquet`, `data_through_utc` trong `outputs/metadata/split_manifest.json`, hàm `src/data/live_quote.py`.
+7. **Biến mở rộng:** dùng sẵn các cột `spx_return_1d`, `dxy_return_1d`, `vix_change_1d`, `*_growth_7d`; **không tự tính lại** return từ cột mức giá (`spx`, `vix`…) trong `features_ext`, vì cuối tuần lặp giá thứ Sáu nên return sẽ sai. Muốn chỉ lấy ngày có quan sát mới thì lọc theo cột `<biến>_obs_date`. Biến nào có giới hạn thì xem `limitation_log.csv` và `extension_coverage.csv`.
+8. **Ghi lại phiên bản dữ liệu** mỗi lần fit mô hình hoặc chạy backtest: `data_through_utc` và `config_version` trong `outputs/metadata/run_manifest.json`.
+
+## 8. Tái lập kết quả (tài liệu chung §5.3)
 
 | Mục | Giá trị |
 |---|---|
@@ -165,15 +195,22 @@ from src.features.build import build_features, chronological_split, fit_scaler
 
 `tests/test_pipeline.py` kiểm tra các hàm này cho ra đúng kết quả như file đã lưu.
 
-## 8. Cấu hình
+## 9. Cấu hình
 
 Mọi tham số đều nằm trong `config/config.yaml`: ngày bắt đầu/kết thúc, tỷ lệ chia mẫu, cửa sổ RV, cách xử lý gap, bật/tắt dữ liệu mở rộng. Không viết cứng tham số trong code. Mỗi khi đổi tham số ảnh hưởng kết quả thì tăng `version`.
 
 `collection.end_date: null` nghĩa là luôn lấy đến nến mới nhất đã đóng. Chỉ đổi mốc `split.train_end` / `split.validation_end` khi cả nhóm thống nhất, và phải tăng `version` vì scaler và mô hình sẽ phải fit lại.
 
-**Khóa phiên bản thư viện:** sau khi cài xong trên máy chạy chính, chạy `pip freeze > requirements-lock.txt` rồi commit file đó. Thành viên khác cài bằng `pip install -r requirements-lock.txt` để có đúng phiên bản.
+**Khóa phiên bản thư viện:** sau khi cài xong trên máy chạy chính, tạo `requirements-lock.txt` rồi commit file đó. Thành viên khác cài bằng `pip install -r requirements-lock.txt` để có đúng phiên bản.
 
-## 9. Cấu trúc thư mục
+```bash
+# Windows PowerShell (bắt buộc ghi ASCII, nếu không pip sẽ báo lỗi đọc file)
+pip freeze | Out-File -Encoding ascii requirements-lock.txt
+# macOS / Linux
+pip freeze > requirements-lock.txt
+```
+
+## 10. Cấu trúc thư mục
 
 ```text
 config/        config.yaml, schema.yaml
@@ -183,7 +220,7 @@ src/features/  feature, chia mẫu, scaler, ghép biến mở rộng
 src/models/    (C2)
 src/evaluation/descriptives.py (C1); backtest (C3)
 dashboard/     (C3)
-tests/         kiểm thử nghiệm thu
+tests/         kiểm thử nghiệm thu (test_c1_acceptance, test_pipeline, test_extensions)
 outputs/       tables/ figures/ metadata/ models/ predictions/
 docs/          hợp đồng dữ liệu, giải thích phương pháp C1
 scripts/       update_daily.bat / update_daily.sh (cập nhật hằng ngày)

@@ -51,6 +51,9 @@ Bản máy đọc của hợp đồng này là `config/schema.yaml`. Code C1 ki�
 | `scaled_features_{asset}.parquet` + `scaler_{asset}.joblib` | C1 | C2 | ☐ | — |
 | `split_manifest.json` | C1 | C2, C3 | ☐ | ☐ |
 | `gap_report.csv` | C1 | C2, C3 | ☐ | ☐ |
+| `features_ext_{asset}.parquet` (biến mở rộng RQ3) | C1 | C2 | ☐ | — |
+| `data/processed/extension/` (SOL, BNB) | C1 | C2 | ☐ | — |
+| `limitation_log.csv`, `extension_coverage.csv` | C1 | C2, Research | ☐ | — |
 | `regime_filtered.csv` (state_id, prob_state_0..K−1, K, as_of, model_id) | C2 | C3 | — | ☐ |
 | `B03`–`B05`, `B07` | C2 | Research, C3 | — | ☐ |
 | `B08_portfolio.csv`, `backtest_nav.csv`, H02–H06 | C3 | Research, UI | — | — |
@@ -61,7 +64,7 @@ Tín hiệu là filtered probability của ngày t, dùng để xác định t�
 
 ## 7. Ngày dữ liệu và giá tham khảo (cho C3)
 
-- **Cập nhật hằng ngày:** sau 07:05 giờ Việt Nam (nến UTC hôm trước đã đóng) chạy `python run_pipeline.py --download`. Lệnh chỉ tải lại BTC/ETH; train, validation và scaler không đổi, ngày mới nối vào cuối tập test. Tự động hóa: `scripts/update_daily.bat` (Windows Task Scheduler) hoặc `scripts/update_daily.sh` (cron). Dữ liệu mở rộng chỉ tải lại khi cần: `python -m src.data.collect --skip-core --all-extensions`.
+- **Cập nhật hằng ngày:** sau 07:05 giờ Việt Nam (nến UTC hôm trước đã đóng) chạy `python run_pipeline.py --download`. Lệnh chỉ tải lại BTC/ETH; train, validation và scaler không đổi, ngày mới nối vào cuối tập test. Tự động hóa: `scripts/update_daily.bat` (Windows Task Scheduler) hoặc `scripts/update_daily.sh` (cron). Dữ liệu mở rộng chỉ tải lại khi cần: `python -m src.data.collect --skip-core --all-extensions`, sau đó `python run_pipeline.py`. Nếu không tải lại, biến mở rộng của những ngày mới giữ giá trị lần tải cuối (vẫn đúng point-in-time, chỉ chưa mới); C2 cần chạy lệnh này trước khi dùng biến mở rộng cho giai đoạn gần nhất.
 - `split_manifest.json → data_through_utc`: ngày nến UTC đã đóng gần nhất trong mẫu. Dashboard hiển thị "Dữ liệu đến hết ngày …" (Excel C3-08) và cảnh báo nếu ngày này cũ hơn hôm qua.
 - `src/data/live_quote.py → get_live_quote(asset)`: giá Binance trực tiếp **chỉ để hiển thị**. Hàm không ghi file và không đưa vào feature hay backtest. Luôn kèm dòng chú thích `LIVE_QUOTE_NOTE`.
 - Regime và backtest chỉ dùng nến ngày đã đóng. Đây là cập nhật theo ngày, không phải realtime (Excel C3-13, C3-14).
@@ -78,7 +81,7 @@ Excel (bảng phân công) và tài liệu coder đặt tên khác nhau ở vài
 | `rv_21d`, `log_volume` (bảng Code cũ) | `rv21`, `log_dollar_volume` | Theo tài liệu coder §1.6 |
 | `config/settings.yaml` (tài liệu chung §3.1) | `config/config.yaml` | Theo Excel A-01 ("config.yaml") |
 | `src/data/fetch.py` (tài liệu chung §3.1) | có `src/data/fetch.py` với `fetch_ohlcv()`; pipeline đầy đủ ở `collect.py` + `binance_collector.py` | Hàm giao tiếp đúng tên §3.2 |
-| `tests/test_pipeline.py` (tài liệu chung §3.1) | có, kèm `tests/test_c1_acceptance.py` (10 tiêu chí đặc tả C1 §1.11) và `tests/test_extensions.py` (dữ liệu mở rộng) | 28 test |
+| `tests/test_pipeline.py` (tài liệu chung §3.1) | có, kèm `tests/test_c1_acceptance.py` (10 tiêu chí đặc tả C1 §1.11) và `tests/test_extensions.py` (dữ liệu mở rộng) | 30 test |
 | `build_features`, `chronological_split`, `fit_scaler` (§3.2) | có trong `src/features/build.py` | Kết quả trùng file đã lưu |
 
 ## 9. Dữ liệu mở rộng (RQ3, robustness, tài sản mở rộng)
@@ -87,16 +90,20 @@ Quy ước phân công: dữ liệu nào **một** trong ba tài liệu (Excel, 
 
 | Biến | File thô | Ghép vào | Căn cứ |
 |---|---|---|---|
-| VIX, SPX, DXY, US10Y, US2Y, US3M | `data/raw/macro_daily.csv` | `features_ext_*` (as-of) | Excel C1-08; blueprint §3.3 |
-| STABLECOIN_SUPPLY, DEFI_TVL, MCAP_BTC/ETH, CMC200 | `data/raw/crypto_market_daily.csv` | `features_ext_*` (as-of) | Blueprint §2.4, §3.1, §3.2, §3.5; tài liệu coder §1.7 |
+| VIX, SPX, DXY, US10Y, US2Y, US3M (+ `spx_return_1d`, `dxy_return_1d`, `vix_change_1d`, `term_spread_10y_2y`) | `data/raw/macro_daily.csv` | `features_ext_*` (as-of) | Excel C1-08; blueprint §3.3 |
+| STABLECOIN_SUPPLY, DEFI_TVL, MCAP_BTC/ETH (+ `*_growth_7d`); CMC200 hiện không có dữ liệu | `data/raw/crypto_market_daily.csv` | `features_ext_*` (as-of) | Blueprint §2.4, §3.1, §3.2, §3.5; tài liệu coder §1.7 |
 | Funding | `data/raw/derivatives_daily.csv` | `features_ext_*` (theo ngày UTC) | Excel C1-09 |
 | Open interest lịch sử | `data/raw/open_interest_daily.csv` | `features_ext_*` (theo ngày UTC) | Excel C1-09; blueprint §2.4 |
 | SOL, BNB | `data/raw/{sol,bnb}_ohlcv.csv` | `data/processed/extension/` | Blueprint §3.1 |
 
 Lệnh tải: `python -m src.data.collect --skip-core --all-extensions`, sau đó `python run_pipeline.py`.
 
-Quy tắc point-in-time: điểm dữ liệu ngày d chỉ dùng từ 00:00 UTC ngày d + 1 + lag (lag = 1). Funding và OI của ngày t đều đã có trước khi nến t đóng. Mỗi biến ghép as-of có cột `<biến>_available_at` và `<biến>_obs_date`; `tests/test_extensions.py` kiểm tra không có giá trị nào được dùng trước khi công bố và không có giá trị vô cực.
+Quy tắc point-in-time: điểm dữ liệu ngày d chỉ dùng từ 00:00 UTC ngày d + 1 + lag (lag = 1). Funding và OI của ngày t đều đã có trước khi nến t đóng. Mỗi biến ghép as-of có cột `<biến>_available_at` và `<biến>_obs_date`; `tests/test_extensions.py` kiểm tra không có giá trị nào được dùng trước khi công bố, không có giá trị vô cực, và các biến thay đổi 1 phiên khớp với chuỗi phiên gốc.
 
 Biến tăng trưởng 7 ngày (`stablecoin_supply_growth_7d`, `defi_tvl_growth_7d`, `oi_growth_7d`) = ln(x_d / x_{d−7}); nếu x_d hoặc x_{d−7} ≤ 0 hoặc không có quan sát thì để trống (NaN), không nội suy.
+
+Biến thay đổi 1 phiên (`spx_return_1d`, `dxy_return_1d` = ln(P_d / P_phiên trước); `vix_change_1d` = VIX_d − VIX_phiên trước) được tính trên chuỗi phiên giao dịch Mỹ gốc rồi mới ghép as-of. Không tính lại từ cột mức giá trong `features_ext`, vì cuối tuần lặp giá thứ Sáu. Nếu phiên trước cách quá 5 ngày thì để trống. Do ghép as-of, thứ Bảy, Chủ nhật và thứ Hai mang giá trị của phiên thứ Sáu; muốn chỉ lấy ngày có quan sát mới thì lọc theo `<biến>_obs_date`.
+
+Giới hạn do nguồn (ghi trong `limitation_log.csv`, không tạo số liệu thay thế): market cap CoinGecko miễn phí chỉ có 365 ngày; open interest BTC từ 09/2020, ETH từ 12/2021; stablecoin supply để trống trước `crypto_market.reliable_from` (2020-01-01); CMC200 "không dùng" vì Yahoo không còn dữ liệu. Ngày bắt đầu và số ngày có dữ liệu của từng biến: `outputs/metadata/extension_coverage.csv`.
 
 Feature lõi HMM (`log_return`, `rv21`, `log_dollar_volume` của BTC/ETH) **không thay đổi**. Biến mở rộng chỉ dùng khi C2 làm RQ3 hoặc robustness (Excel C2-14). Trạng thái từng biến luôn ở `outputs/metadata/limitation_log.csv`; biến nào chưa tải được ghi rõ, không tạo số liệu thay thế.

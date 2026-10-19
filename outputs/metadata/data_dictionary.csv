@@ -20,6 +20,8 @@ features,amihud_illiq,|simple_return| / quote_volume; để trống nếu quote_
 features,btc_eth_corr21,Tương quan trượt 21 ngày của log return BTC và ETH; cần đủ 21 ngày trùng,"[-1, 1]",C1,"tùy chọn, mô tả"
 scaled_features,"z_log_return, z_rv21, z_log_dollar_volume",(x - mean_train) / std_train (ddof=0); scaler fit CHỈ trên train,z-score,C1,đầu vào HMM/GMM của C2
 features_ext,"vix, spx, dxy",Giá đóng cửa Mỹ ghép as-of theo available_at <= thời điểm nến đóng,điểm chỉ số,Yahoo/FRED,mở rộng RQ3
+features_ext,"spx_return_1d, dxy_return_1d",ln(P_d / P_phiên trước) tính trên chuỗi PHIÊN GIAO DỊCH Mỹ gốc rồi ghép as-of (thứ Bảy/CN/thứ Hai mang return phiên thứ Sáu; dùng <biến>_obs_date để lấy ngày có quan sát mới); trống nếu phiên trước cách > 5 ngày,thập phân/phiên,Yahoo/FRED,mở rộng RQ3 (blueprint §3.3 S&P 500 returns)
+features_ext,vix_change_1d,"VIX_d - VIX_phiên trước, tính trên chuỗi phiên gốc rồi ghép as-of; trống nếu phiên trước cách > 5 ngày",điểm VIX,Yahoo/FRED,mở rộng RQ3 (blueprint §3.3)
 features_ext,funding_sum / funding_mean / funding_n,Tổng/trung bình/số lần funding thanh toán trong ngày UTC,thập phân,Binance Futures,mở rộng RQ3
 features_ext,"us10y, us2y, us3m","Lợi suất trái phiếu Mỹ 10 năm / 2 năm / 3 tháng, ghép as-of",%/năm,FRED DGS10/DGS2/DGS3MO,mở rộng RQ3 (blueprint §3.3)
 features_ext,term_spread_10y_2y,"us10y - us2y, chỉ khi hai kỳ hạn cùng ngày quan sát",điểm %,FRED,mở rộng RQ3

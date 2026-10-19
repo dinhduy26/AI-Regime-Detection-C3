@@ -13,7 +13,10 @@ Nguồn (data/raw/):
   open_interest_daily.csv  OI ảnh chụp cuối ngày UTC                 (asset, date_utc, ...)
 Biến dẫn xuất tính TRÊN CHUỖI GỐC trước khi ghép (không dùng thông tin sau ngày quan sát):
   stablecoin_supply_growth_7d = ln(S_d / S_{d-7}),  defi_tvl_growth_7d tương tự,
-  oi_growth_7d = ln(OI_t / OI_{t-7}),  term_spread_10y_2y = us10y - us2y (cùng thời điểm sẵn có).
+  oi_growth_7d = ln(OI_t / OI_{t-7}),  term_spread_10y_2y = us10y - us2y (cùng thời điểm sẵn có),
+  spx_return_1d = ln(SPX_d / SPX_phiên trước), dxy_return_1d tương tự, vix_change_1d = VIX_d - VIX_phiên trước
+  (tính trên chuỗi PHIÊN GIAO DỊCH Mỹ gốc; ghép as-of nên thứ Bảy/CN/thứ Hai mang return phiên
+  thứ Sáu — dùng cột <biến>_obs_date nếu chỉ muốn lấy ngày có quan sát mới).
 Mỗi biến ghép as-of có thêm cột <tên>_available_at để kiểm chứng point-in-time.
 """
 from __future__ import annotations
@@ -26,6 +29,34 @@ from src.utils.config import get_logger
 log = get_logger("extended")
 SERIES_FILES = ["macro_daily.csv", "crypto_market_daily.csv"]
 GROWTH_SERIES = {"STABLECOIN_SUPPLY": "stablecoin_supply_growth_7d", "DEFI_TVL": "defi_tvl_growth_7d"}
+# Biến thay đổi 1 phiên của thị trường Mỹ (blueprint §3.3 "S&P 500 returns", VIX, DXY).
+# Tính trên CHUỖI PHIÊN GIAO DỊCH GỐC (phiên trước = quan sát liền trước), KHÔNG tính trên lịch
+# crypto 7 ngày (nếu tính sau khi ghép, thứ Bảy/CN lặp giá thứ Sáu -> return giả bằng 0).
+#   kind "log":  ln(P_d / P_prev)      kind "diff": P_d - P_prev (điểm)
+SESSION_CHANGES = {"SPX": ("spx_return_1d", "log"), "DXY": ("dxy_return_1d", "log"),
+                   "VIX": ("vix_change_1d", "diff")}
+# Nếu phiên trước cách quá số ngày lịch này (nguồn bị thiếu nhiều phiên) -> để trống, không gộp
+# nhiều phiên thành 1 return. 5 ngày đủ cho cuối tuần + nghỉ lễ Mỹ (vd. thứ Sáu -> thứ Ba).
+SESSION_MAX_GAP_DAYS = 5
+
+
+def _session_change(dates: pd.Series, values: pd.Series, kind: str, max_gap: int) -> pd.Series:
+    """Thay đổi so với phiên giao dịch LIỀN TRƯỚC trên chuỗi gốc (đã sắp xếp theo ngày).
+    Trống nếu: không có phiên trước, phiên trước cách > max_gap ngày, hoặc (kind=log) giá <= 0."""
+    d = pd.to_datetime(dates).to_numpy()
+    v = values.to_numpy(dtype=float)
+    out = np.full(len(v), np.nan)
+    if len(v) < 2:
+        return pd.Series(out, index=values.index)
+    gap = (d[1:] - d[:-1]) / np.timedelta64(1, "D")
+    cur, prev = v[1:], v[:-1]
+    ok = np.isfinite(cur) & np.isfinite(prev) & (gap <= max_gap)
+    if kind == "log":
+        ok &= (cur > 0) & (prev > 0)
+        out[1:][ok] = np.log(cur[ok] / prev[ok])
+    else:
+        out[1:][ok] = cur[ok] - prev[ok]
+    return pd.Series(out, index=values.index)
 
 
 def _calendar_growth(dates: pd.Series, values: pd.Series, k: int) -> pd.Series:
@@ -80,6 +111,17 @@ def build_extended(feat: pd.DataFrame, raw_dir, cfg: dict | None = None) -> tupl
                 gname = GROWTH_SERIES[series].replace("_7d", f"_{k}d")
                 base = _asof(base, g[["date_local", "value", "available_at_utc"]], gname)
                 added_cols.append((gname, f"ln({series}_d / {series}_(d-{k}))"))
+            if fname == "macro_daily.csv" and series in SESSION_CHANGES:
+                cname, kind = SESSION_CHANGES[series]
+                s = s.dropna(subset=["value"])
+                c = s.assign(value=_session_change(s["date_local"], s["value"], kind,
+                                                   SESSION_MAX_GAP_DAYS))
+                # GIỮ dòng NaN: phiên mới không tính được return -> ngày crypto đó để trống,
+                # không mang return cũ của phiên trước ra dùng tiếp.
+                base = _asof(base, c[["date_local", "value", "available_at_utc"]], cname)
+                rule = (f"ln({series}_d / {series}_phiên trước)" if kind == "log"
+                        else f"{series}_d - {series}_phiên trước (điểm)")
+                added_cols.append((cname, rule + "; tính trên chuỗi phiên Mỹ gốc rồi ghép as-of"))
 
     if {"us10y", "us2y"} <= set(base.columns):
         # chỉ tính khi hai kỳ hạn là CÙNG một ngày quan sát (không trộn ngày)

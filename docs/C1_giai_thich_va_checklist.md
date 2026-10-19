@@ -14,7 +14,7 @@ Tài liệu này giúp người phụ trách C1 trả lời câu hỏi khi bảo
 | C1-05 | Làm sạch, QA, đối soát | `src/data/clean.py`, `src/data/crosscheck.py` | `prices_daily.parquet`, `gap_report.csv`, `data_quality.csv`, `price_crosscheck.csv` |
 | C1-06 | Log return, RV21 | `src/features/build.py` | `features_{asset}.parquet` |
 | C1-07 | Quote volume, Amihud, tương quan | `src/features/build.py` | `log_dollar_volume`, `amihud_illiq`, `btc_eth_corr21` |
-| C1-08 | VIX/DXY/S&P, trái phiếu Mỹ; stablecoin, DeFi TVL, market cap, CMC200 | `src/data/macro_collector.py`, `src/data/crypto_market_collector.py`, `src/features/extended.py` | `macro_daily.csv`, `crypto_market_daily.csv`, `features_ext_{asset}.parquet` |
+| C1-08 | VIX/DXY/S&P, trái phiếu Mỹ; stablecoin, DeFi TVL, market cap, CMC200 | `src/data/macro_collector.py`, `src/data/crypto_market_collector.py`, `src/features/extended.py` | `macro_daily.csv`, `crypto_market_daily.csv`, `features_ext_{asset}.parquet` (gồm `spx_return_1d`, `dxy_return_1d`, `vix_change_1d`, `term_spread_10y_2y`, `*_growth_7d`) |
 | C1-09 | Funding, open interest lịch sử | `src/data/derivatives_collector.py`, `src/data/collection_meta.py` | `derivatives_daily.csv`, `open_interest_daily.csv`, `limitation_log.csv` |
 | (blueprint §3.1) | SOL, BNB | `src/features/extension_assets.py` | `data/processed/extension/*` |
 | C1-10 | Ghép ma trận, chia mẫu | `src/features/build.py`, `src/features/pipeline.py` | `split_manifest.json` |
@@ -22,7 +22,7 @@ Tài liệu này giúp người phụ trách C1 trả lời câu hỏi khi bảo
 | C1-12 | Từ điển, B01/B02/H01 | `src/evaluation/descriptives.py` | `B01`, `B02`, `H01`, `data_dictionary.csv` |
 | C1-13 | Pipeline chạy lại | `run_pipeline.py`, `scripts/update_daily.*` | `run_manifest.json`, `update_log.txt` |
 | (hỗ trợ C3) | Giá tham khảo, ngày dữ liệu | `src/data/live_quote.py`, `data_through_utc` | Chỉ để hiển thị |
-| Kiểm thử | 10 tiêu chí §1.11 | `tests/test_c1_acceptance.py` | `pytest -q` |
+| Kiểm thử | 10 tiêu chí §1.11, hàm giao tiếp §3.2, dữ liệu mở rộng | `tests/test_c1_acceptance.py`, `tests/test_pipeline.py`, `tests/test_extensions.py` | `pytest -q` → 30 passed |
 
 ## 2. Các câu hỏi có thể bị hỏi khi bảo vệ
 
@@ -74,14 +74,27 @@ API Binance chỉ trả 30 ngày gần nhất, nên C1 lấy lịch sử từ fi
 **Vì sao các biến mở rộng phải trễ 1 ngày?**
 Dữ liệu vĩ mô, trái phiếu, stablecoin… được công bố sau khi ngày kết thúc. Để chắc chắn không dùng thông tin chưa công bố, giá trị của ngày d chỉ được dùng cho nến crypto từ ngày d+1. Test `test_ext_point_in_time` kiểm tra từng giá trị đã ghép.
 
+**Vì sao lợi suất S&P 500 (và thay đổi VIX, DXY) không tính từ cột giá trong `features_ext`?**
+Sau khi ghép theo lịch crypto 7 ngày, thứ Bảy và Chủ nhật lặp lại giá thứ Sáu. Nếu tính return trên chuỗi đó thì cuối tuần ra return giả bằng 0 và return thứ Hai bị lệch. Vì vậy C1 tính `spx_return_1d = ln(P_d / P_phiên trước)` trên **chuỗi phiên giao dịch Mỹ gốc**, rồi mới ghép as-of. Nếu nguồn thiếu nhiều phiên (phiên trước cách quá 5 ngày) thì để trống, không gộp nhiều phiên thành một return. Test `test_ext_session_returns_from_raw_sessions` tính lại từng giá trị từ `macro_daily.csv` gốc để kiểm chứng.
+
+**Vì sao có biến bị thiếu hoặc lịch sử ngắn (CMC200, market cap, OI, stablecoin)?**
+Đây là giới hạn của nguồn, không phải lỗi code. Yahoo đã không còn dữ liệu CMC200; CoinGecko miễn phí chỉ trả 365 ngày market cap; Binance chỉ có file open interest từ 09/2020 (BTC) và 12/2021 (ETH); DefiLlama trước 2020 theo dõi stablecoin chưa đầy đủ (cuối 2018 chỉ ghi khoảng 0,4 tỷ USD). Theo nguyên tắc "không tuyên bố có dữ liệu nếu nguồn không đáp ứng", C1 không tự tạo số liệu thay thế mà ghi rõ trạng thái từng biến trong `limitation_log.csv` và độ phủ trong `extension_coverage.csv`, để nhóm bài báo đưa vào phần giới hạn nghiên cứu.
+
+**Dữ liệu có đáng tin không, kiểm tra thế nào?**
+Hai lớp đối soát (`python -m src.data.crosscheck`): (A) so với file lịch sử Binance công bố riêng trên data.binance.vision, kết quả khớp tuyệt đối 0/244 dòng lệch; (B) so với Yahoo BTC-USD/ETH-USD (giá tổng hợp nhiều sàn), chênh lệch trung vị khoảng 0,09%, tương quan return ngày 0,991 (BTC) và 0,994 (ETH). Các ngày lệch lớn rơi vào giai đoạn 2017–2018, đợt USDT mất neo tháng 10/2018 và ngày 12/03/2020, đều giải thích được.
+
 ## 3. Checklist trước khi giao cho C2/C3
 
 - [ ] `python -m src.data.collect` chạy thành công; `source_log.csv` có ngày bắt đầu/kết thúc thực tế
 - [ ] `python run_pipeline.py` báo OK cho clean, features, reports
-- [ ] `pytest -q` pass, không còn test nào bị skip
+- [ ] `python -m src.data.collect --skip-core --all-extensions` rồi `python run_pipeline.py` để dữ liệu mở rộng mới nhất
+- [ ] `pytest -q` báo **30 passed**, không còn test nào bị skip
+- [ ] `python -m src.data.crosscheck` không có tháng nào lệch ở lớp A
 - [ ] Đã xem `gap_report.csv` và `data_quality.csv`, đặc biệt các ngày có |log return| > 0,30 (đối chiếu với sự kiện thật)
-- [ ] Đã xem hình H01
-- [ ] Chạy `pip freeze > requirements-lock.txt` và commit file này
+- [ ] Đã xem hình H01 và `limitation_log.csv`
+- [ ] Tạo `requirements-lock.txt` dạng ASCII (PowerShell: `pip freeze | Out-File -Encoding ascii requirements-lock.txt`) và commit file này
+- [ ] Khi nén hoặc đưa repo lên GitHub, bỏ `.venv`, `__pycache__`, `.pytest_cache`
 - [ ] (Tùy chọn) Đặt Task Scheduler chạy `scripts\update_daily.bat` lúc 07:05 mỗi ngày
 - [ ] Mỗi lần C2 fit mô hình, ghi lại `data_through_utc` và `config_version` của lần chạy đó
-- [ ] C2, C3 ký xác nhận bảng trong `docs/A01_data_contract.md`
+- [ ] C2, C3 đọc mục 7 của `README.md` và ký xác nhận bảng trong `docs/A01_data_contract.md`
+- [ ] Báo R2 cập nhật Methodology §3.7 theo cách chia mẫu cố định ngày (train ≤ 2023-05-05 < validation ≤ 2025-01-24 < test)

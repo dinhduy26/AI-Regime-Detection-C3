@@ -54,6 +54,36 @@ def test_ext_growth_is_backward_looking(cfg):
         np.testing.assert_allclose(got[both], expect[both], rtol=1e-12)
 
 
+def test_ext_session_returns_from_raw_sessions(cfg):
+    """spx_return_1d / dxy_return_1d / vix_change_1d phải bằng thay đổi so với PHIÊN GIAO DỊCH
+    LIỀN TRƯỚC trong macro_daily.csv gốc (không phải ngày crypto trước), và không có return giả = 0
+    do lặp giá cuối tuần."""
+    raw = path_of(cfg, "raw") / "macro_daily.csv"
+    if not raw.exists():
+        pytest.skip("chưa có macro_daily.csv")
+    m = pd.read_csv(raw).dropna(subset=["value"])
+    for a, e in _ext_files(cfg).items():
+        for series, (col, kind) in {"SPX": ("spx_return_1d", "log"), "DXY": ("dxy_return_1d", "log"),
+                                    "VIX": ("vix_change_1d", "diff")}.items():
+            if col not in e.columns:
+                continue
+            s = (m[m["series"] == series].sort_values("date_local")
+                 .drop_duplicates("date_local", keep="last").reset_index(drop=True))
+            prev_v, prev_d = s["value"].shift(1), pd.to_datetime(s["date_local"]).shift(1)
+            gap = (pd.to_datetime(s["date_local"]) - prev_d).dt.days
+            expect = np.log(s["value"] / prev_v) if kind == "log" else s["value"] - prev_v
+            expect = pd.Series(expect.where(gap <= 5).to_numpy(), index=s["date_local"])
+            got = e.dropna(subset=[col])
+            np.testing.assert_allclose(got[col].to_numpy(),
+                                       expect.reindex(got[f"{col}_obs_date"]).to_numpy(),
+                                       rtol=1e-12, atol=1e-15, err_msg=f"{a}.{col}")
+            # mỗi giá trị phải đến từ đúng ngày quan sát của chính chuỗi mức
+            lvl = series.lower()
+            if f"{lvl}_obs_date" in e.columns:
+                same = got[f"{lvl}_obs_date"] == got[f"{col}_obs_date"]
+                assert same.mean() > 0.99, f"{a}.{col}: lệch ngày quan sát so với {lvl}"
+
+
 def test_ext_no_infinite_values(cfg):
     """Không có giá trị vô cực (vd. ln(x/0)) trong biến mở rộng — C2 dùng được trực tiếp."""
     for a, e in _ext_files(cfg).items():
