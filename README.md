@@ -80,9 +80,27 @@ python run_pipeline.py --download # tải lại dữ liệu rồi chạy toàn b
 pytest -q                         # kiểm thử nghiệm thu C1 trên dữ liệu thật
 ```
 
-Kết quả đúng: **30 passed**, không có test nào bị skip (test chỉ skip khi chưa tải dữ liệu tương ứng).
+Nghiệm thu C1 có **30 tests**. Sau khi chạy C2, toàn bộ C1 + C2 có **75 tests**, bao gồm đủ 55 trường hợp trước đợt hoàn thiện; dữ liệu mở rộng phải có để không bị skip.
 
-Khi C2 tạo `src/models/run.py` và C3 tạo `src/evaluation/backtest_run.py`, mỗi file có hàm `run(cfg)`, thì `run_pipeline.py` sẽ tự gọi thêm hai bước đó.
+C2 đã có `src/models/run.py` với hàm `run(cfg)`, được pipeline tự gọi. C3 sẽ được gọi khi có `src/evaluation/backtest_run.py` với cùng giao diện.
+
+### Chạy riêng phần C2
+
+```powershell
+& "$HOME\.venv\Scripts\Activate.ps1"
+python -m pip install -r requirements-lock.txt
+python scripts/complete_c2.py  # core + chẩn đoán RV14/RV30 + pytest + xác minh giao diện C3
+```
+
+Chạy từng phần: `python run_pipeline.py --steps models` hoặc `python scripts/verify_c2.py`.
+
+C2 giữ nguyên dữ liệu/scaler/mốc chia mẫu của C1, fit HMM riêng cho BTC/ETH, thử K=2/3/4 × 5 seeds và chọn bằng validation. GMM đối chứng dùng cùng K, feature và mẫu. Đầu ra gồm B03/B04/B05/B07, H02/H03/H04, artifacts và xác suất trong `outputs/predictions/`. Hướng dẫn đọc kết quả và bàn giao C3: [docs/C2_huong_dan_va_nghiem_thu.md](docs/C2_huong_dan_va_nghiem_thu.md).
+
+Độ ổn định là kết quả nghiên cứu riêng với việc test code có đạt hay không. Xem `outputs/tables/C2_stability_summary.csv` và `seed_stability_status` trong metadata. Kết quả hiện tại của cả BTC và ETH là **unstable** theo các ngưỡng cảnh báo mô tả trong config; chạy đủ test không biến kết quả này thành stable.
+
+Báo cáo hoàn thiện: [docs/C2_nghiem_thu_hoan_thien.md](docs/C2_nghiem_thu_hoan_thien.md). C3 đọc nghiên cứu phải truyền `acknowledge_unstable=True` và nhận cảnh báo; `require_stable=True` vẫn từ chối hai mô hình. Metadata cuối cùng trong `.joblib`, JSON và manifest được đồng bộ, lưu rồi tải lại để kiểm tra.
+
+Chuẩn bị commit và lint: [docs/C2_commit.md](docs/C2_commit.md). Output C2 sinh tự động được giữ local và bỏ qua bởi `.gitignore`; danh sách test lịch sử nằm trong `tests/fixtures/c2_test_inventory.json` nên không cần commit log máy cũ.
 
 ## 4. Cập nhật dữ liệu hằng ngày
 

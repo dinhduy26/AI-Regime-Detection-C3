@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "purpose": "Portable identities of historically verified tests; historical logs are optional runtime evidence.",
+  "baselines": {
+    "47": {
+      "tests": 47,
+      "historical_junit_sha256": "c3974e6584febfee11ebc8b9d188a9d1b9e5cbc6bfd429544c62bafc4b27098d"
+    },
+    "55": {
+      "tests": 55,
+      "historical_junit_sha256": "e73d2d377f56e4b9f91bf35ded06cf4bb6b57ee2436de2d968df5431d624f4c1"
+    }
+  },
+  "cases": [
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_01_unique_key_closed_utc",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_02_ohlc_valid",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_03_no_return_across_gap",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_04_point_in_time[0.3]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_04_point_in_time[0.6]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_04_point_in_time[0.9]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_05_return_formulas",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_06_rv21",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_07_split",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_08_scaler_train_only",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_09_schema_and_quote_volume",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_10_handoff_outputs",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_11_daily_update_keeps_split_and_scaler[120]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_11_daily_update_keeps_split_and_scaler[30]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_12_data_through",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c1_acceptance",
+      "name": "test_split_reproducible",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_btc_eth_models_independent",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_c3_reader_returns_matching_causal_test_signals[BTC]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_c3_reader_returns_matching_causal_test_signals[ETH]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_candidate_fitting_never_receives_test",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_causal_prefix_and_library_smoothing[BTC]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_causal_prefix_and_library_smoothing[ETH]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_forward_and_smoothing_against_exact_path_enumeration",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_forward_specification_hand_example",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_gap_resets_and_flips_use_real_calendar",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_handoff_mapping_asof_and_probability_contract[BTC]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_handoff_mapping_asof_and_probability_contract[ETH]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_hmm_parameters_and_likelihood[BTC]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_hmm_parameters_and_likelihood[ETH]",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_parameter_count_and_absorbing_state_duration",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_selection_stability_and_comparison_tables",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_selection_tie_rule_and_invalid_fits",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_models",
+      "name": "test_smoothing_retains_state_mass_below_float_exponential_range",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_c2_stability",
+      "name": "test_all_pair_minimum_prevents_majority_masking_an_unstable_seed",
+      "introduced_in": 55
+    },
+    {
+      "classname": "tests.test_c2_stability",
+      "name": "test_incomplete_pairs_never_imply_stability[duplicate]",
+      "introduced_in": 55
+    },
+    {
+      "classname": "tests.test_c2_stability",
+      "name": "test_incomplete_pairs_never_imply_stability[missing]",
+      "introduced_in": 55
+    },
+    {
+      "classname": "tests.test_c2_stability",
+      "name": "test_incomplete_pairs_never_imply_stability[nan]",
+      "introduced_in": 55
+    },
+    {
+      "classname": "tests.test_c2_stability",
+      "name": "test_low_agreement_cannot_be_reported_as_stable",
+      "introduced_in": 55
+    },
+    {
+      "classname": "tests.test_c2_stability",
+      "name": "test_recomputed_summary_matches_raw_evidence_and_manifest",
+      "introduced_in": 55
+    },
+    {
+      "classname": "tests.test_c2_stability",
+      "name": "test_stability_flags_do_not_choose_the_model_or_use_test",
+      "introduced_in": 55
+    },
+    {
+      "classname": "tests.test_c2_stability",
+      "name": "test_too_few_seeds_and_all_rejected_states_remain_visible",
+      "introduced_in": 55
+    },
+    {
+      "classname": "tests.test_extensions",
+      "name": "test_ext_growth_is_backward_looking",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_extensions",
+      "name": "test_ext_invalid_values_blanked",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_extensions",
+      "name": "test_ext_no_infinite_values",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_extensions",
+      "name": "test_ext_point_in_time",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_extensions",
+      "name": "test_ext_rows_match_core",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_extensions",
+      "name": "test_ext_session_returns_from_raw_sessions",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_extensions",
+      "name": "test_extension_assets_same_rules_as_core",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_extensions",
+      "name": "test_limitation_log_covers_every_extension_var",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_extensions",
+      "name": "test_raw_extension_no_unfinished_day",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_pipeline",
+      "name": "test_interface_matches_saved_files",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_pipeline",
+      "name": "test_n_unique",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_pipeline",
+      "name": "test_no_nan_after_warmup",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_pipeline",
+      "name": "test_train_only_scaler",
+      "introduced_in": 47
+    },
+    {
+      "classname": "tests.test_pipeline",
+      "name": "test_utc",
+      "introduced_in": 47
+    }
+  ]
+}

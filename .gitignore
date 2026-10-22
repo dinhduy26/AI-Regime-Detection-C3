@@ -12,3 +12,18 @@ venv/
 # data/raw/*.csv
 # data/processed/*.parquet
 .DS_Store
+
+# C2 generated outputs. Keep local handoff artifacts; regenerate with complete_c2.py.
+/outputs/models/hmm_*.joblib
+/outputs/models/gmm_*.joblib
+/outputs/predictions/regime_*.csv
+/outputs/figures/H0[234]_*.png
+/outputs/figures/H0[234]_*.svg
+/outputs/tables/B0[3457]_*.csv
+/outputs/tables/C2_*.csv
+/outputs/tables/GMM_initializations.csv
+/outputs/metadata/model_*.json
+/outputs/metadata/C2_*.json
+/outputs/metadata/C2_*.log
+/outputs/metadata/pytest_*.xml
+/outputs/metadata/pytest_*.log

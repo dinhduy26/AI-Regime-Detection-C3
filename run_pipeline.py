@@ -79,7 +79,9 @@ def main(argv=None) -> int:
             else:  # bước của C2/C3: chỉ chạy nếu module đã tồn tại
                 try:
                     mod = importlib.import_module(OPTIONAL_HOOKS[step])
-                except ModuleNotFoundError:
+                except ModuleNotFoundError as exc:
+                    if exc.name != OPTIONAL_HOOKS[step]:
+                        raise
                     status[step] = f"chưa có — {OPTIONAL_HOOKS[step]} chưa được tạo"
                     log.info("%s: %s", step, status[step])
                     continue
@@ -92,7 +94,7 @@ def main(argv=None) -> int:
 
     outputs = {}
     for folder in ("data/processed", "data/processed/extension", "outputs/tables", "outputs/figures",
-                   "outputs/metadata", "outputs/models", "outputs/models/extension", "data/raw"):
+                   "outputs/metadata", "outputs/models", "outputs/models/extension", "outputs/predictions", "data/raw"):
         for p in sorted((ROOT / folder).glob("*")):
             if p.is_file() and p.name not in (".gitkeep", "run_manifest.json"):
                 outputs[p.relative_to(ROOT).as_posix()] = file_hash(p)
