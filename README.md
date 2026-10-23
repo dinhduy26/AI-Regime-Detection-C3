@@ -105,7 +105,7 @@ Chuẩn bị commit và lint: [docs/C2_commit.md](docs/C2_commit.md). Output C2 
 ### Chạy phần C3 (backtest và dashboard)
 
 ```bash
-python run_pipeline.py --steps backtest   # cần đầu ra C2; tạo B08, backtest_nav, H05
+python run_pipeline.py --steps models backtest   # máy mới: dựng C2 rồi backtest (B08, backtest_nav, H05)
 streamlit run dashboard/app.py            # dashboard 4 trang tại http://localhost:8501
 ```
 

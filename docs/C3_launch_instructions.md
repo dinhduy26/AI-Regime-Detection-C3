@@ -16,9 +16,11 @@ pip install -r requirements-lock.txt
 Đầu ra C2 và C3 không được commit, nên máy mới phải chạy lại:
 
 ```bash
-python scripts/complete_c2.py              # HMM/GMM, xác suất filtered/smoothed, B03-B05, B07, H02-H04
-python run_pipeline.py --steps backtest    # B08, backtest_nav, H05
+python run_pipeline.py --steps models backtest   # HMM/GMM, xác suất, B03-B05, B07, H02-H04; rồi B08, backtest_nav, H05
+python scripts/complete_c2.py                    # (tùy chọn) thêm chẩn đoán RV14/RV30 và kiểm tra toàn bộ
 ```
+
+Chạy `complete_c2.py` sau bước backtest: script này yêu cầu mọi test đạt và không test nào bị bỏ qua, nên nếu chạy trước khi có kết quả backtest thì các test C3 bị bỏ qua và script báo lỗi.
 
 Cập nhật dữ liệu mới nhất (sau 07:05 giờ Việt Nam, khi nến ngày UTC đã đóng):
 

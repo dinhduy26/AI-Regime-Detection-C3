@@ -45,6 +45,7 @@ def asset_files(asset):
         "features": P["processed"] / f"features_{a}.parquet",
         "filtered": P["predictions"] / f"regime_filtered_{a}.csv",
         "smoothed": P["predictions"] / f"regime_smoothed_{a}.csv",
+        "gmm": P["predictions"] / f"regime_gmm_{a}.csv",
     }
 
 
@@ -144,3 +145,14 @@ def smoothed(asset):
         raise ValueError("File smoothed không đúng hợp đồng (hindsight=True, probability_type=smoothed)")
     df["date"] = pd.to_datetime(df["date_utc"])
     return df
+
+
+def gmm(asset):
+    """Nhãn GMM đối chứng (posterior từng ngày, không có cấu trúc Markov). None nếu chưa có file."""
+    p = asset_files(asset)["gmm"]
+    if not p.exists():
+        return None, None
+    df = pd.read_csv(p)
+    df["date"] = pd.to_datetime(df["date_utc"])
+    label_map = json.loads(df["label_map"].iloc[0]) if "label_map" in df and len(df) else None
+    return df, label_map

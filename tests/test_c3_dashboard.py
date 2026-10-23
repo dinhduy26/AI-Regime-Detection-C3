@@ -48,7 +48,7 @@ def _run(asset=None, page=None):
 def _kpi(at, label):
     """Giá trị trong thẻ KPI (HTML) có nhãn label."""
     for m in at.markdown:
-        if f"<div class='l'>{label}</div>" in m.value:
+        if f"<div class='l'><span>{label}</span>" in m.value:
             return m.value.split("<div class='v'>")[1].split("</div>")[0]
     raise AssertionError(f"Không thấy thẻ KPI {label}")
 
@@ -87,10 +87,10 @@ def test_unstable_model_is_flagged_and_states_follow_k(ready):
     for asset in ready["assets"]:
         at = _run(asset)
         meta = c2["assets"][asset]
-        texts = " ".join(w.value for w in at.warning)
+        texts = " ".join(m.value for m in at.markdown)
         if meta["seed_stability_status"] != "stable":
-            assert "unstable" in texts
-        # Tab Overview chỉ hiện đúng K state của mô hình (không ép 4 nhãn).
+            assert "mô hình unstable" in texts
+        # Thanh bên ghi đúng K của mô hình (không ép 4 nhãn).
         captions = " ".join(c.value for c in at.caption)
         assert f"K = {meta['K']}" in captions
 
@@ -109,4 +109,4 @@ def test_scenarios_switch_and_show_simulated_label(ready):
     for option in box.options:
         box.set_value(option).run()
         assert not at.exception
-        assert any("simulated" in w.value for w in at.warning)
+        assert any("simulated" in m.value for m in at.markdown)
