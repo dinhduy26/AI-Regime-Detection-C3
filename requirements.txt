@@ -15,3 +15,6 @@ pytest>=7.4
 yfinance>=0.2.48
 # Time zone database (America/New_York) on Windows
 tzdata>=2023.3
+# C3 dashboard (Streamlit 4 tab) and interactive charts
+streamlit>=1.40
+plotly>=5.20
