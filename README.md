@@ -8,7 +8,7 @@ Nhận diện trạng thái thị trường (regime) BTC và ETH bằng Gaussian
 |---|---|---|
 | **C1** | Dữ liệu & feature | `src/data`, `src/features`, `src/evaluation/descriptives.py` |
 | C2 | HMM/GMM & đánh giá | `src/models` |
-| C3 | Backtest & dashboard | `src/evaluation`, `dashboard/` |
+| C3 | Backtest & dashboard | `src/evaluation/backtest*.py`, `dashboard/`, `config/backtest.yaml` |
 
 ---
 
@@ -82,7 +82,7 @@ pytest -q                         # kiểm thử nghiệm thu C1 trên dữ li�
 
 Nghiệm thu C1 có **30 tests**. Sau khi chạy C2, toàn bộ C1 + C2 có **75 tests**, bao gồm đủ 55 trường hợp trước đợt hoàn thiện; dữ liệu mở rộng phải có để không bị skip.
 
-C2 đã có `src/models/run.py` với hàm `run(cfg)`, được pipeline tự gọi. C3 sẽ được gọi khi có `src/evaluation/backtest_run.py` với cùng giao diện.
+C2 có `src/models/run.py` và C3 có `src/evaluation/backtest_run.py`, cùng giao diện hàm `run(cfg)`, được pipeline tự gọi ở bước `models` và `backtest`.
 
 ### Chạy riêng phần C2
 
@@ -101,6 +101,17 @@ C2 giữ nguyên dữ liệu/scaler/mốc chia mẫu của C1, fit HMM riêng ch
 Báo cáo hoàn thiện: [docs/C2_nghiem_thu_hoan_thien.md](docs/C2_nghiem_thu_hoan_thien.md). C3 đọc nghiên cứu phải truyền `acknowledge_unstable=True` và nhận cảnh báo; `require_stable=True` vẫn từ chối hai mô hình. Metadata cuối cùng trong `.joblib`, JSON và manifest được đồng bộ, lưu rồi tải lại để kiểm tra.
 
 Chuẩn bị commit và lint: [docs/C2_commit.md](docs/C2_commit.md). Output C2 sinh tự động được giữ local và bỏ qua bởi `.gitignore`; danh sách test lịch sử nằm trong `tests/fixtures/c2_test_inventory.json` nên không cần commit log máy cũ.
+
+### Chạy phần C3 (backtest và dashboard)
+
+```bash
+python run_pipeline.py --steps backtest   # cần đầu ra C2; tạo B08, backtest_nav, H05
+streamlit run dashboard/app.py            # dashboard 4 tab tại http://localhost:8501
+```
+
+C3 đọc xác suất **filtered** của C2 qua `src/models/handoff.py`, áp quy tắc chỉ định trước (w = 1 nếu P(high-risk) < 0,5, ngược lại 0,25; phí 0,10% × turnover; tín hiệu ngày t cho lợi suất t+1) trên tập test, so với buy-and-hold ở ba kịch bản: baseline close-to-close, kiểm tra chéo drift-adjusted turnover và kiểm tra chéo khớp open ngày sau. Tham số nằm trong `config/backtest.yaml`, tách khỏi `config.yaml` để không đổi hash cấu hình của C1/C2. Dashboard chỉ đọc file kết quả, không huấn luyện lại. Đầu ra C3 sinh tự động cũng được `.gitignore` loại khỏi commit.
+
+Tài liệu: [đặc tả, kết quả và nghiệm thu C3](docs/C3_huong_dan_va_nghiem_thu.md) · [hướng dẫn chạy demo](docs/C3_launch_instructions.md) · [checklist demo](docs/C3_demo_checklist.md). Ảnh H06 của dashboard thật: `python scripts/capture_dashboard.py` (tùy chọn, cần Playwright).
 
 ## 4. Cập nhật dữ liệu hằng ngày
 
@@ -231,16 +242,16 @@ pip freeze > requirements-lock.txt
 ## 10. Cấu trúc thư mục
 
 ```text
-config/        config.yaml, schema.yaml
+config/        config.yaml, schema.yaml, backtest.yaml (C3)
 data/          raw/ interim/ processed/
 src/data/      collector Binance, vĩ mô, phái sinh; làm sạch
 src/features/  feature, chia mẫu, scaler, ghép biến mở rộng
-src/models/    (C2)
-src/evaluation/descriptives.py (C1); backtest (C3)
-dashboard/     (C3)
-tests/         kiểm thử nghiệm thu (test_c1_acceptance, test_pipeline, test_extensions)
+src/models/    (C2) HMM/GMM, filtering, chọn mô hình, bàn giao C3
+src/evaluation/descriptives.py (C1); backtest.py, backtest_run.py (C3)
+dashboard/     (C3) app.py (Streamlit 4 tab), result_service.py
+tests/         kiểm thử nghiệm thu C1, C2, C3 (test_c3_backtest, test_c3_dashboard)
 outputs/       tables/ figures/ metadata/ models/ predictions/
-docs/          hợp đồng dữ liệu, giải thích phương pháp C1
-scripts/       update_daily.bat / update_daily.sh (cập nhật hằng ngày)
+docs/          hợp đồng dữ liệu, giải thích phương pháp C1, hướng dẫn C2, C3
+scripts/       update_daily.bat / .sh; complete_c2.py, verify_c2.py; capture_dashboard.py (H06)
 run_pipeline.py
 ```
