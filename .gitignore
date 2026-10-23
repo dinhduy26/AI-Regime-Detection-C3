@@ -27,3 +27,13 @@ venv/
 /outputs/metadata/C2_*.log
 /outputs/metadata/pytest_*.xml
 /outputs/metadata/pytest_*.log
+
+# C3 generated outputs. Keep local; regenerate with `python run_pipeline.py --steps backtest`
+# (and `python scripts/capture_dashboard.py` for H06 screenshots).
+/outputs/tables/B08_*.csv
+/outputs/predictions/backtest_nav.csv
+/outputs/figures/H05_*.png
+/outputs/figures/H05_*.svg
+/outputs/figures/H06_*.png
+/outputs/metadata/backtest_manifest.json
+/outputs/metadata/H06_capture.json

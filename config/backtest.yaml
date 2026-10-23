@@ -1,0 +1,56 @@
+# =====================================================================
+# C3 - Cấu hình backtest regime-aware (mô phỏng nghiên cứu, không phải khuyến nghị đầu tư)
+#
+# Tách riêng khỏi config/config.yaml để KHÔNG làm đổi hash cấu hình mà C1/C2 đã ghi
+# trong manifest (scripts/verify_c2.py đối chiếu hash đó). Mọi tham số C3 nằm ở đây;
+# không viết cứng trong code. Tăng `version` khi đổi bất kỳ tham số nào ảnh hưởng kết quả.
+#
+# Các giá trị dưới đây được CHỈ ĐỊNH TRƯỚC theo tài liệu Research & Technical Methodology
+# (mục 3.3-3.7 phần C3). Không chỉnh ngưỡng/tỷ trọng/phí theo kết quả trên tập test.
+# =====================================================================
+version: "1.0.0"
+
+# Chỉ đánh giá trên tập test của C1/C2 (train/validation không thay cho hiệu suất chính).
+period: test
+
+# Tín hiệu: xác suất FILTERED của state rủi ro cao (state có volatility train lớn nhất do C2 chốt).
+# Không dùng xác suất smoothed (hindsight) cho bất kỳ quyết định nào.
+signal:
+  column: prob_high_risk
+  # C2 hiện đánh dấu cả BTC và ETH là "unstable" theo chẩn đoán seed. Dùng cho nghiên cứu
+  # phải xác nhận rõ; kết quả luôn mang cờ cảnh báo này trong B08 và dashboard.
+  acknowledge_unstable: true
+
+# Quy tắc phân bổ: w_t = weight_risk_on nếu p_risk,t < risk_threshold, ngược lại weight_risk_off.
+allocation:
+  risk_threshold: 0.5
+  weight_risk_on: 1.0
+  weight_risk_off: 0.25
+  cash_return_daily: 0.0        # phần tiền mặt có lợi suất 0 trong MVP
+  initial_weight: 0.0           # bắt đầu toàn bộ bằng tiền mặt; lệnh mua đầu tiên chịu phí
+
+# Phí giả định của nhóm: 0,10% trên mỗi đơn vị turnover; không gồm slippage, spread, thuế.
+costs:
+  fee_rate: 0.001
+
+metrics:
+  annualization_days: 365       # crypto giao dịch 24/7
+  risk_free_daily: 0.0          # rf = 0 (giả định MVP)
+
+# Ba kịch bản báo riêng, không trộn kết quả:
+#   baseline_close_to_close : baseline bắt buộc theo Methodology (idealized end-of-day exposure)
+#   crosscheck_drift_adjusted: kiểm tra chéo turnover theo tỷ trọng thực tế trước khi tái cân bằng
+#   crosscheck_next_open    : kiểm tra chéo khớp lệnh ở giá open ngày t+1, giữ tới open ngày t+2
+scenarios:
+  baseline_close_to_close:
+    return_basis: close_to_close
+    turnover_method: target_change_approx
+  crosscheck_drift_adjusted:
+    return_basis: close_to_close
+    turnover_method: drift_adjusted
+  crosscheck_next_open:
+    return_basis: next_open
+    turnover_method: target_change_approx
+
+figures:
+  dpi: 300

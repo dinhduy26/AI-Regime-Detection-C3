@@ -1,0 +1,14 @@
+# Giao diện dashboard (streamlit run dashboard/app.py từ thư mục gốc dự án sẽ đọc file này)
+[theme]
+base = "light"
+primaryColor = "#1E3A8A"
+backgroundColor = "#F4F6F9"
+secondaryBackgroundColor = "#F1F5F9"
+textColor = "#0F172A"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
